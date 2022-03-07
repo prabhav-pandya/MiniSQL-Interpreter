@@ -8,7 +8,9 @@ int main() {
     SQLInterpreter interpreter = SQLInterpreter();
     for(;;){
         cout<<"> ";
-        cin>>query;
+        getline(cin, query);
+        //cin>>query;
+        interpreter.run(query);
     }
     return 0;
 }

@@ -1,7 +1,3 @@
-//
-// Created by prabhav on 05/03/22.
-//
-
 #ifndef MINIRDBMS_SCANNER_H
 #define MINIRDBMS_SCANNER_H
 
@@ -16,13 +12,20 @@ class Scanner {
     int current = 0;
     vector<Token> tokens;
 
+    map<string, TokenType> keywords;
+
 public:
     Scanner(string query);
     bool isAtEnd();
     void scanToken();
+    vector<Token> scanTokens();
     char advance();
-    void addToken();
+    void addToken(TokenType type);
+    void addToken(TokenType type, string literal);
     char peek();
+    bool match(char expected);
+    void value();
+    void identifier();
 };
 
 

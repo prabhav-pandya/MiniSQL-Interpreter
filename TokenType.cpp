@@ -2,7 +2,7 @@
 enum TokenType {
     // Single-character tokens.
     LEFT_PAREN, RIGHT_PAREN, SEMICOLON, STAR,
-
+    COMMA, DOT, MINUS, PLUS, SLASH,
     // One or two character tokens.
     BANG, BANG_EQUAL,
     EQUAL, EQUAL_EQUAL,
@@ -13,9 +13,7 @@ enum TokenType {
     IDENTIFIER, STRING, NUMBER,
 
     // KEYWORDS
-    AND, OR, SELECT, CREATE, TABLE, FROM, WHERE, UPDATE, INSERT, IN, HAVING, AS,
-
-    EOF
+    AND, OR, SELECT, CREATE, TABLE, FROM, WHERE, UPDATE, INSERT, IN, HAVING, AS
 };
 
 /*

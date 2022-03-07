@@ -102,6 +102,12 @@ build CMakeFiles/MiniRDBMS.dir/Token.cpp.o: CXX_COMPILER__MiniRDBMS_Debug /home/
   OBJECT_DIR = CMakeFiles/MiniRDBMS.dir
   OBJECT_FILE_DIR = CMakeFiles/MiniRDBMS.dir
 
+build CMakeFiles/MiniRDBMS.dir/Parser.cpp.o: CXX_COMPILER__MiniRDBMS_Debug /home/prabhav/Desktop/College/DBMS/MiniRDBMS/Parser.cpp || cmake_object_order_depends_target_MiniRDBMS
+  DEP_FILE = CMakeFiles/MiniRDBMS.dir/Parser.cpp.o.d
+  FLAGS = -g -std=gnu++2a
+  OBJECT_DIR = CMakeFiles/MiniRDBMS.dir
+  OBJECT_FILE_DIR = CMakeFiles/MiniRDBMS.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target MiniRDBMS
@@ -110,7 +116,7 @@ build CMakeFiles/MiniRDBMS.dir/Token.cpp.o: CXX_COMPILER__MiniRDBMS_Debug /home/
 #############################################
 # Link the executable MiniRDBMS
 
-build MiniRDBMS: CXX_EXECUTABLE_LINKER__MiniRDBMS_Debug CMakeFiles/MiniRDBMS.dir/main.cpp.o CMakeFiles/MiniRDBMS.dir/SQLInterpreter.cpp.o CMakeFiles/MiniRDBMS.dir/Scanner.cpp.o CMakeFiles/MiniRDBMS.dir/TokenType.cpp.o CMakeFiles/MiniRDBMS.dir/Token.cpp.o
+build MiniRDBMS: CXX_EXECUTABLE_LINKER__MiniRDBMS_Debug CMakeFiles/MiniRDBMS.dir/main.cpp.o CMakeFiles/MiniRDBMS.dir/SQLInterpreter.cpp.o CMakeFiles/MiniRDBMS.dir/Scanner.cpp.o CMakeFiles/MiniRDBMS.dir/TokenType.cpp.o CMakeFiles/MiniRDBMS.dir/Token.cpp.o CMakeFiles/MiniRDBMS.dir/Parser.cpp.o
   FLAGS = -g
   OBJECT_DIR = CMakeFiles/MiniRDBMS.dir
   POST_BUILD = :
