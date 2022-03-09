@@ -7,10 +7,10 @@
 using namespace std;
 
 class Token {
+public:
     TokenType type;
     string lexeme;
     string literal;
-public:
     Token(TokenType type, string lexeme, string literal);
     string toString();
     string getTokenType();
