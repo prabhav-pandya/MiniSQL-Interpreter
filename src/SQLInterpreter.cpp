@@ -103,8 +103,7 @@ void SQLInterpreter::createTableMap(string tableName) {
     tableRaw.open("../Relations/" + tableName);
     string row;
 
-    while (tableRaw) {
-        getline(tableRaw, row);
+    while (getline(tableRaw, row)) {
         vector<string> rowSplit = splitHashStr(row);
 
         for (int i = 0; i < rowSplit.size(); i++) {
@@ -122,6 +121,7 @@ void SQLInterpreter::insertRow(string colName, string val, string type) {
     if (type == "INT") {
         table<int>[colName].push_back(stoi(val));
     }
+
     if (type == "STR") {
         table<string>[colName].push_back(val);
     }
