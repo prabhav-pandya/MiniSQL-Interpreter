@@ -11,7 +11,7 @@ program -> command* EOF;
 command -> (createTable | dropTable | select | insert | update | help) ";";
 createTable -> "CREATE TABLE" table "(" attrDecl ")";
 dropTable   -> "DROP TABLE" table;
-select -> "SELECT" attrList "FROM" table ("WHERE" condList)?;
+select -> "SELECT" attrList "FROM" tableList ("WHERE" condList)?;
 insert -> "INSERT INTO" table "VALUES" "(" attrList ")"
 delete -> "DELETE FROM" table ("WHERE" condList)?;
 update -> "UPDATE" table "SET" (attr = LITERAL)+ ("WHERE" condList)?;

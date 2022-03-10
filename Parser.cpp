@@ -52,11 +52,39 @@ Select Parser::parseSelect(){
         // if there is a WHERE, consume and store the condition
         if(!isAtEnd()){
             consume(WHERE, "Syntax Error!");
-            while(peek().type==SEMICOLON){
-                condition.push_back(peek());
-                advance();
+            while(peek().type!=SEMICOLON){
+                if(isAtEnd()) throw "Syntax error!";
+//                condition.push_back(peek());
+//                advance();
+                  if(peek().type==IDENTIFIER){
+                      condition.push_back(peek());
+                      advance();
+                  }
+                  else throw "Syntax error!";
+
+                  if(peek().type!=SEMICOLON){
+                      vector<TokenType> operators = {BANG, BANG_EQUAL,
+                                                     EQUAL,GREATER, GREATER_EQUAL,
+                                                     LESS, LESS_EQUAL};
+                      if(find(operators.begin(), operators.end(), peek().type)==operators.end()) {
+                          throw "Syntax error!";
+                      }
+                      condition.push_back(peek());
+                      advance();
+
+                      if(peek().type==STRING || peek().type==IDENTIFIER){
+                          condition.push_back(peek());
+                          advance();
+                      }
+                      else throw "Syntax error!";
+                  }
+
+                  if(peek().type==AND || peek().type==OR){
+                      condition.push_back(peek());
+                      advance();
+                  }
             }
-        }
+        } else throw "Syntax error!";
     }
     return Select(tableName, columns, condition);
 }

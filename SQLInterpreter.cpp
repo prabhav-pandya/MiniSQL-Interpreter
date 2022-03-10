@@ -35,7 +35,9 @@ void SQLInterpreter::interpreteSelect(Select stmt){
     cout<<endl;
 
     for(int i=0;i<totalRows;i++){
-        printRow(i, columnsToPrint);
+        if(doesRowSatisfy(i, stmt.condition)){
+            printRow(i, columnsToPrint);
+        }
     }
 
 }
@@ -111,4 +113,210 @@ void SQLInterpreter::insertRow(string colName, string val, string type) {
     if(type=="STR"){
         table<string>[colName].push_back(val);
     }
+}
+
+// this function is only for specific conditional queries
+// this code must never be used in industry systems!
+bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
+    // For simplicity we're assuming that there will be same operator in a single condition (AND/OR)
+    if(conditions.size()==0) return true;
+    int condIdx=0;
+    int res = -1;
+    TokenType opr=NULL_TOKEN; // stores the last operator (AND/OR)
+    while(condIdx<conditions.size()){
+        string attrName = conditions[condIdx].lexeme;
+        if(colTypes[attrName].compare("INT")==0){
+            int val = table<int>[attrName][rowIdx];
+            condIdx ++;
+            if(conditions[condIdx].type==GREATER_EQUAL){
+                condIdx++;
+                if(val>=stoi(conditions[condIdx].lexeme)){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+            else if(conditions[condIdx].type==GREATER){
+                condIdx++;
+                if(val>stoi(conditions[condIdx].lexeme)){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+            else if(conditions[condIdx].type==EQUAL){
+                condIdx++;
+                if(val==stoi(conditions[condIdx].lexeme)){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+            else if(conditions[condIdx].type==LESS){
+                condIdx++;
+                if(val<stoi(conditions[condIdx].lexeme)){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+            else if(conditions[condIdx].type==LESS_EQUAL){
+                condIdx++;
+                if(val<=stoi(conditions[condIdx].lexeme)){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+        }
+        else if(colTypes[attrName].compare("STR")==0){
+            string val = table<string>[attrName][rowIdx];
+            condIdx ++;
+            if(conditions[condIdx].type==GREATER_EQUAL){
+                condIdx++;
+                if(val.compare(conditions[condIdx].literal)>=0){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+            else if(conditions[condIdx].type==GREATER){
+                condIdx++;
+                if(val.compare(conditions[condIdx].literal)>0){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+            else if(conditions[condIdx].type==EQUAL){
+                condIdx++;
+                if(val.compare(conditions[condIdx].literal)==0){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+            else if(conditions[condIdx].type==LESS){
+                condIdx++;
+                if(val.compare(conditions[condIdx].literal)<0){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+            if(conditions[condIdx].type==LESS_EQUAL){
+                condIdx++;
+                if(val.compare(conditions[condIdx].literal)>0){
+                    if(res==-1) res = 1;
+                    if(opr==AND){
+                        res *= 1;
+                    }
+                    else res = 1;
+                    if(opr==OR && res==1) return true;
+                }
+                else{
+                    if(res==-1) res=0;
+                    if(opr==AND){
+                        res *= 0;
+                    }
+                    if(opr==AND && res==0) return false;
+                }
+            }
+        }
+        condIdx++;
+        opr = conditions[condIdx].type;
+        condIdx++;
+    }
+    if(res==1) return true;
+    else return false;
 }
