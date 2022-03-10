@@ -11,7 +11,7 @@ string Token::toString() {
 }
 
 string Token::getTokenType(){
-    vector<TokenType> keywords = {AND, OR, SELECT, CREATE, TABLE, FROM, WHERE, UPDATE, INSERT, IN, HAVING, AS};
+    vector<TokenType> keywords = {AND, OR, SELECT, CREATE, TABLE, FROM, WHERE, UPDATE, INSERT, IN, HAVING, AS, QUIT};
     if(find(keywords.begin(), keywords.end(), type)!=keywords.end()) return "KEYWORD";
     else if(type==IDENTIFIER) return "IDENTIFIER";
     else if(type==STRING) return "STRING LITERAL";

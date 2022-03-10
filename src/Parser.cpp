@@ -42,32 +42,33 @@ Select Parser::parseSelect(){
 
     // consume table name
     if(peek().type==IDENTIFIER) tableName = peek().lexeme;
-    else throw "Table name not specified";
+    else cerr << "Table name not specified";
     advance();
     vector<Token> condition;
 
     // check for semicolon
     if(peek().type==SEMICOLON) consume(SEMICOLON,"");
+
     else{
         // if there is a WHERE, consume and store the condition
         if(!isAtEnd()){
             consume(WHERE, "Syntax Error!");
             while(peek().type!=SEMICOLON){
-                if(isAtEnd()) throw "Syntax error!";
+                if(isAtEnd()) cerr << "Syntax error!";
 //                condition.push_back(peek());
 //                advance();
                   if(peek().type==IDENTIFIER){
                       condition.push_back(peek());
                       advance();
                   }
-                  else throw "Syntax error!";
+                  else cerr << "Syntax error!";
 
                   if(peek().type!=SEMICOLON){
                       vector<TokenType> operators = {BANG, BANG_EQUAL,
                                                      EQUAL,GREATER, GREATER_EQUAL,
                                                      LESS, LESS_EQUAL};
                       if(find(operators.begin(), operators.end(), peek().type)==operators.end()) {
-                          throw "Syntax error!";
+                          cerr << "Syntax error!";
                       }
                       condition.push_back(peek());
                       advance();
@@ -76,7 +77,7 @@ Select Parser::parseSelect(){
                           condition.push_back(peek());
                           advance();
                       }
-                      else throw "Syntax error!";
+                      else cerr << "Syntax error!";
                   }
 
                   if(peek().type==AND || peek().type==OR){
@@ -84,13 +85,13 @@ Select Parser::parseSelect(){
                       advance();
                   }
             }
-        } else throw "Syntax error!";
+        } else cerr << "Syntax error!";
     }
     return Select(tableName, columns, condition);
 }
 
 void Parser::consume(TokenType expected, string error) {
-    if(isAtEnd() || tokens[current].type!=expected) throw error;
+    if(isAtEnd() || tokens[current].type!=expected) cerr << error;
     advance();
 }
 

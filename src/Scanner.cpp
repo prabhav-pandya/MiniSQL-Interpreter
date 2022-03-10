@@ -22,6 +22,7 @@ Scanner::Scanner(string query) {
     keywords["in"] = IN;
     keywords["having"] = HAVING;
     keywords["as"] = AS;
+    keywords["quit"] = QUIT;
 
     this->query = query;
 }

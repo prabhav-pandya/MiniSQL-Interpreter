@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-#include "SQLInterpreter.h"
+#include "src/SQLInterpreter.h"
 
 using namespace std;
 
@@ -9,7 +9,6 @@ int main() {
         SQLInterpreter interpreter = SQLInterpreter();
         cout<<"> ";
         getline(cin, query);
-        //cin>>query;
         interpreter.run(query);
     }
     return 0;
