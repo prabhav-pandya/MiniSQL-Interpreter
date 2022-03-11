@@ -30,10 +30,13 @@ class Parser {
 public:
     Parser(vector<Token> tokensList);
     Stmt parse();
+
     Select parseSelect();
     CreateTable parseCreateTable();
     DropTable parseDropTable();
     Insert parseInsert();
+    Help parseHelp();
+
     Token peek();
     Token advance();
     bool isAtEnd();

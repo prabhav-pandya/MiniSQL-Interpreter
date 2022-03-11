@@ -28,6 +28,8 @@ public:
     bool checkForSemicolon(string basicString);
 
     string createSchema(const CreateTable& table);
+
+    void interpretHelp(Help help);
 };
 
 

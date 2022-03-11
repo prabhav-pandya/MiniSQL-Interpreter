@@ -10,7 +10,6 @@ Stmt Parser::parse() {
     return Stmt();
 }
 
-
 CreateTable Parser::parseCreateTable() {
     string tableName;
     vector<string> columnNames;
@@ -36,7 +35,7 @@ CreateTable Parser::parseCreateTable() {
                 advance();
             }
 
-            if(peek().type != RIGHT_PAREN) consume(COMMA, "Expected a Comma!");
+            if (peek().type != RIGHT_PAREN) consume(COMMA, "Expected a Comma!");
         } else {
             cerr << "Invalid Column Name!";
         }
@@ -71,11 +70,10 @@ Insert Parser::parseInsert() {
     // read table name
     string tableName;
 
-    if(peek().type==IDENTIFIER){
+    if (peek().type == IDENTIFIER) {
         tableName = peek().lexeme;
         advance();
-    }
-    else cerr<< "Expected table name";
+    } else cerr << "Expected table name";
 
     // consume VALUES
     consume(VALUES, "Expected Token Values");
@@ -83,20 +81,18 @@ Insert Parser::parseInsert() {
 
     // consume values
     vector<string> values;
-    while(peek().type!=RIGHT_PAREN){
-        if(peek().type==IDENTIFIER || peek().type==STRING){
-            values.push_back(peek().type==IDENTIFIER? peek().lexeme:peek().literal);
+    while (peek().type != RIGHT_PAREN) {
+        if (peek().type == IDENTIFIER || peek().type == STRING) {
+            values.push_back(peek().type == IDENTIFIER ? peek().lexeme : peek().literal);
             advance();
-        }
-        else{
+        } else {
             cerr << "Expected values!";
             exit(1);
         }
 
-        if(peek().type==COMMA){
+        if (peek().type == COMMA) {
             consume(COMMA, "");
-        }
-        else break;
+        } else break;
     }
 
     consume(RIGHT_PAREN, "Expected )");
@@ -180,6 +176,46 @@ Select Parser::parseSelect() {
         } else cerr << "Syntax error!";
     }
     return Select(tableName, columns, condition);
+}
+
+Help Parser::parseHelp() {
+    string tableName;
+    string commandName;
+    consume(HELP, "Expected token HELP!");
+
+    switch (peek().type) {
+        case TABLES: {
+            consume(TABLES, "Expected token TABLES!");
+            return Help(1, "", "");
+            break;
+        }
+
+        case DESCRIBE: {
+            consume(DESCRIBE, "Expected token DESCRIBE!");
+
+            if (peek().type == IDENTIFIER) tableName = peek().lexeme;
+            else cerr << "Table name not specified!" << endl;
+
+            advance();
+            return Help(2, tableName, "");
+        }
+
+        default: {
+            if (peek().literal == "") {
+                cerr << "Invalid Keyword!" << endl;
+                exit(1);
+            }
+
+            commandName = peek().literal;
+            advance();
+
+            if (peek().type == CREATE || peek().type == DROP) {
+                advance();
+            }
+
+            return Help(3, "", commandName);
+        }
+    }
 }
 
 void Parser::consume(TokenType expected, string error) {

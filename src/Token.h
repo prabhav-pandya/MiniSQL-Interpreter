@@ -11,7 +11,9 @@ public:
     TokenType type;
     string lexeme;
     string literal;
+
     Token(TokenType type, string lexeme, string literal);
+
     string toString();
     string getTokenType();
 };

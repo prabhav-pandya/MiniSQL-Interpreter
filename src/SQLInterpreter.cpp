@@ -42,6 +42,12 @@ void SQLInterpreter::run(string query) {
             break;
         }
 
+        case HELP: {
+            Help stmt = parser.parseHelp();
+            interpretHelp(stmt);
+            break;
+        }
+
         case QUIT: {
             exit(0);
         }
@@ -75,7 +81,6 @@ void SQLInterpreter::interpreteCreateTable(CreateTable stmt) {
 
     cout << "Table Successfully Created" << endl;
 }
-
 
 string SQLInterpreter::createSchema(const CreateTable &table) {
     string schema = table.tableName;
@@ -178,6 +183,40 @@ void SQLInterpreter::interpretInsert(Insert stmt) {
     cout << "Table " + stmt.tableName + " updated" << endl;
     table.close();
 }
+
+void SQLInterpreter::interpretHelp(Help stmt) {
+    vector<string> lines;
+    ifstream schema("../Relations/schema");
+    for (string line; getline(schema, line); lines.push_back(line));
+    schema.close();
+
+    switch (stmt.option) {
+        case 1: {
+            for(string line : lines) {
+                cout << line << endl;
+            }
+            break;
+        }
+
+        case 2: {
+            for(string line : lines) {
+                if (line[stmt.tableName.size()] != '#') continue;
+                if (line.substr(0, stmt.tableName.size()) == stmt.tableName) {
+                    cout << line << endl;
+                    break;
+                }
+            }
+            break;
+        }
+
+        case 3: {
+            auto commandDescription = stmt.commandDescriptions.find(stmt.commandName);
+            cout << commandDescription->second;
+            break;
+        }
+    }
+}
+
 
 void SQLInterpreter::printRow(int index, vector<string> columns) {
     for (int i = 0; i < columns.size(); i++) {

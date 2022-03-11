@@ -32,6 +32,11 @@ Scanner::Scanner(string query) {
     keywords["str"] = TYPE;
     keywords["char"] = TYPE;
 
+    // help
+    keywords["help"] = HELP;
+    keywords["tables"] = TABLES;
+    keywords["describe"] = DESCRIBE;
+
     this->query = query;
 }
 
@@ -84,13 +89,14 @@ void Scanner::identifier() {
     string text = query.substr(start, current-start);
     TokenType type = keywords.find(toLower(text))!=keywords.end()? keywords[toLower(text)]: IDENTIFIER;
     //if(type==IDENTIFIER) cout<<text<<endl;
-    addToken(type);
+    addToken(type, text);
 }
 
 void Scanner::value() {
     while(peek()!='"' && !isAtEnd()){
         advance();
     }
+
     advance();
     string value = query.substr(start+1, current-start-2);
     addToken(STRING, value);
