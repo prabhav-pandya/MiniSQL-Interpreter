@@ -9,6 +9,9 @@ enum TokenType {
     GREATER, GREATER_EQUAL,
     LESS, LESS_EQUAL,
 
+    // Data Types - it contains all STR, INT, etc. types
+    TYPE,
+
     // Literals.
     IDENTIFIER, STRING, NUMBER,
 

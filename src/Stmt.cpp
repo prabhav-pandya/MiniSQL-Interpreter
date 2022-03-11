@@ -10,6 +10,19 @@ class Stmt{
 
 };
 
+class CreateTable: public Stmt{
+public:
+    string tableName;
+    vector<string> columnNames;
+    vector<Token> columnTypes;
+
+    CreateTable(string tableName, vector<string> columnNames, vector<Token> columnTypes){
+        this->tableName = tableName;
+        this->columnNames = columnNames;
+        this->columnTypes = columnTypes;
+    }
+};
+
 class Select: public Stmt{
 public:
     string tableName;

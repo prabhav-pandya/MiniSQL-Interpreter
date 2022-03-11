@@ -31,6 +31,7 @@ public:
     Parser(vector<Token> tokensList);
     Stmt parse();
     Select parseSelect();
+    CreateTable parseCreateTable();
     Token peek();
     Token advance();
     bool isAtEnd();

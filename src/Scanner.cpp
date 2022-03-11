@@ -24,6 +24,11 @@ Scanner::Scanner(string query) {
     keywords["as"] = AS;
     keywords["quit"] = QUIT;
 
+    // data types
+    keywords["int"] = TYPE;
+    keywords["str"] = TYPE;
+    keywords["char"] = TYPE;
+
     this->query = query;
 }
 

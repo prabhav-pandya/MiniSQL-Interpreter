@@ -13,6 +13,12 @@ void SQLInterpreter::run(string query) {
     Parser parser(tokens);
 
     switch (tokens[0].type) {
+        case CREATE : {
+            CreateTable stmt = parser.parseCreateTable();
+            interpreteCreateTable(stmt);
+            break;
+        }
+
         case SELECT : {
             Select stmt = parser.parseSelect();
             interpreteSelect(stmt);
@@ -28,6 +34,10 @@ void SQLInterpreter::run(string query) {
         }
     }
 };
+
+void SQLInterpreter::interpreteCreateTable(CreateTable stmt) {
+
+}
 
 void SQLInterpreter::interpreteSelect(Select stmt) {
     createTableMap(stmt.tableName);
@@ -304,3 +314,4 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
     if (res == 1) return true;
     else return false;
 }
+
