@@ -11,6 +11,7 @@ vector<Token> Scanner::scanTokens() {
 Scanner::Scanner(string query) {
     // keywords hashmap
     keywords["create"] = CREATE;
+    keywords["drop"] = DROP;
     keywords["table"] = TABLE;
     keywords["from"] = FROM;
     keywords["and"] = AND;

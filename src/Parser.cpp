@@ -49,6 +49,20 @@ CreateTable Parser::parseCreateTable() {
     return CreateTable(tableName, columnNames, columnTypes);
 }
 
+DropTable Parser::parseDropTable() {
+    string tableName;
+
+    consume(DROP, "Expected Token DROP!");
+    consume(TABLE, "Expected Token Table!");
+
+    // consume table name
+    if (peek().type == IDENTIFIER) tableName = peek().lexeme;
+    else cerr << "Table name not specified!" << endl;
+    advance();
+
+    return DropTable(tableName);
+}
+
 Insert Parser::parseInsert() {
     // consume INSERT INTO
     consume(INSERT, "Expected Token Insert");

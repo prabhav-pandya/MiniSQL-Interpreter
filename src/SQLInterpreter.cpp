@@ -24,6 +24,12 @@ void SQLInterpreter::run(string query) {
             break;
         }
 
+        case DROP : {
+            DropTable stmt = parser.parseDropTable();
+            interpretDropTable(stmt);
+            break;
+        }
+
         case SELECT : {
             Select stmt = parser.parseSelect();
             interpreteSelect(stmt);
@@ -90,6 +96,39 @@ string SQLInterpreter::createSchema(const CreateTable &table) {
     }
 
     return schema;
+}
+
+void SQLInterpreter::interpretDropTable(DropTable stmt) {
+    bool first = true;
+    vector<string> lines;
+    ifstream schema("../Relations/schema");
+    for (string line; getline(schema, line); lines.push_back(line));
+    schema.close();
+
+    ofstream newSchema("../Relations/schema");
+    for (string line: lines) {
+        if (line.substr(0, stmt.tableName.size()) == stmt.tableName
+            && line[stmt.tableName.size()] == '#') {
+            continue;
+        }
+
+        if(first) {
+            newSchema << line;
+            first = false;
+            continue;
+        }
+
+        newSchema << endl << line ;
+    }
+    newSchema.close();
+
+    string filename = "../Relations/" + stmt.tableName;
+    if (remove(filename.c_str()) != 0) {
+        cerr << "Error in deleting file" << endl;
+        return;
+    }
+
+    cout << "Table Dropped" << endl;
 }
 
 void SQLInterpreter::interpreteSelect(Select stmt) {

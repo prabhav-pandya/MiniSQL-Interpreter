@@ -32,6 +32,7 @@ public:
     Stmt parse();
     Select parseSelect();
     CreateTable parseCreateTable();
+    DropTable parseDropTable();
     Insert parseInsert();
     Token peek();
     Token advance();

@@ -23,6 +23,15 @@ public:
     }
 };
 
+class DropTable: public Stmt{
+public:
+    string tableName;
+
+    DropTable(string tableName) {
+        this->tableName = tableName;
+    }
+};
+
 class Select: public Stmt{
 public:
     string tableName;
