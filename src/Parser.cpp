@@ -14,18 +14,42 @@ Stmt Parser::parse() {
 CreateTable Parser::parseCreateTable() {
     string tableName;
     vector<string> columnNames;
-    vector<Token> columnTypes;
+    vector<string> columnTypes;
 
     consume(CREATE, "Expected Token Create!");
     consume(TABLE, "Expected Token Table!");
 
     // consume table name
     if (peek().type == IDENTIFIER) tableName = peek().lexeme;
-    else cerr << "Table name not specified";
+    else cerr << "Table name not specified!" << endl;
     advance();
+
+    consume(LEFT_PAREN, "Expected a '('!");
+
+    do {
+        if (peek().type == IDENTIFIER) {
+            columnNames.push_back(peek().lexeme);
+            advance();
+
+            if (peek().type == TYPE) {
+                columnTypes.push_back(peek().lexeme);
+                advance();
+            }
+
+            if(peek().type != RIGHT_PAREN) consume(COMMA, "Expected a Comma!");
+        } else {
+            cerr << "Invalid Column Name!";
+        }
+    } while (peek().type != RIGHT_PAREN);
+
+
+    consume(RIGHT_PAREN, "Expected a ')'!");
+//    consume(SEMICOLON, "Expected a ';'!");
+
+    return CreateTable(tableName, columnNames, columnTypes);
 }
 
-Insert Parser::parseInsert(){
+Insert Parser::parseInsert() {
     // consume INSERT INTO
     consume(INSERT, "Expected Token Insert");
     consume(INTO, "Expected Token Into");
@@ -145,10 +169,7 @@ Select Parser::parseSelect() {
 }
 
 void Parser::consume(TokenType expected, string error) {
-    if (isAtEnd() || tokens[current].type != expected){
-        cerr << error;
-        exit(1);
-    }
+    if (isAtEnd() || tokens[current].type != expected) cerr << error;
     advance();
 }
 

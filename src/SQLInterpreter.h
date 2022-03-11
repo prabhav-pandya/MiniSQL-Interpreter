@@ -23,6 +23,10 @@ public:
     void printRow(int index, vector<string> columns);
     bool doesRowSatisfy(int rowIdx, vector<Token> conditions);
     void interpreteCreateTable(CreateTable table);
+
+    bool checkForSemicolon(string basicString);
+
+    string createSchema(const CreateTable& table);
 };
 
 

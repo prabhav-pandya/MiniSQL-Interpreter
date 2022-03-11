@@ -8,6 +8,11 @@ SQLInterpreter::SQLInterpreter() {
 }
 
 void SQLInterpreter::run(string query) {
+    if (!checkForSemicolon(query)) {
+        cerr << "Expected a Semicolon!" << endl;
+        return;
+    }
+
     Scanner scanner(query);
     vector<Token> tokens = scanner.scanTokens();
     Parser parser(tokens);
@@ -42,6 +47,37 @@ void SQLInterpreter::run(string query) {
 };
 
 void SQLInterpreter::interpreteCreateTable(CreateTable stmt) {
+    fstream schema("../Relations/schema", ios_base::app);
+    schema << endl << createSchema(stmt);
+    schema.close();
+
+    // TODO: check for duplicate table name
+
+    fstream table;
+    table.open("../Relations/" + stmt.tableName, ios::out);
+    table << ' ' << endl;
+    table.close();
+}
+
+string SQLInterpreter::createSchema(const CreateTable& table) {
+    string schema = table.tableName;
+    schema += "#";
+
+    int numColumns = table.columnNames.size();
+    for(int i = 0; i < numColumns; i++) {
+        schema += table.columnNames[i];
+        schema += "#";
+
+        string type = table.columnTypes[i];
+        transform(type.begin(), type.end(), type.begin(), ::toupper);
+        schema += type;
+
+        if(i < numColumns - 1) {
+            schema += "#";
+        }
+    }
+
+    return schema;
 }
 
 void SQLInterpreter::interpreteSelect(Select stmt) {
@@ -147,7 +183,7 @@ void SQLInterpreter::createTableMap(string tableName) {
 
     while (getline(tableRaw, row)) {
 
-        if(row.empty()) continue;
+//        if(row.empty()) continue;
 
         vector<string> rowSplit = splitHashStr(row);
 
@@ -350,3 +386,7 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
     else return false;
 }
 
+bool SQLInterpreter::checkForSemicolon(string query) {
+    if (query[query.size() - 1] != ';') return false;
+    else return true;
+}

@@ -5,9 +5,9 @@ using namespace std;
 
 int main() {
     string query;
-    for(;;){
+    for (;;) {
         SQLInterpreter interpreter = SQLInterpreter();
-        cout<<"> ";
+        cout << "> ";
         getline(cin, query);
         interpreter.run(query);
     }

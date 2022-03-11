@@ -1,1 +1,2 @@
 students#id#INT#name#STR#dept#STR
+emp#id#INT#name#STR#dept#INT
