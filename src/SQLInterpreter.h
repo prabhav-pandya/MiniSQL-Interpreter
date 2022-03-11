@@ -17,6 +17,7 @@ public:
     SQLInterpreter();
     void run(string query);
     void interpreteSelect(Select stmt);
+    void interpretInsert(Insert stmt);
     void createTableMap(string tableName);
     void insertRow(string colName, string val, string type);
     void printRow(int index, vector<string> columns);

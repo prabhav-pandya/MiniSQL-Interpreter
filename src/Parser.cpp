@@ -7,6 +7,7 @@ Parser::Parser(vector<Token> tokensList) {
 }
 
 Stmt Parser::parse() {
+    return Stmt();
 }
 
 
@@ -22,6 +23,10 @@ CreateTable Parser::parseCreateTable() {
     if (peek().type == IDENTIFIER) tableName = peek().lexeme;
     else cerr << "Table name not specified";
     advance();
+}
+
+Insert Parser::parseInsert(){
+
 }
 
 Select Parser::parseSelect() {

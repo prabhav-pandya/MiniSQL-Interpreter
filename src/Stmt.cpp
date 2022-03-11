@@ -36,4 +36,15 @@ public:
     }
 };
 
+class Insert: public Stmt{
+public:
+    string tableName;
+    vector<string> values;
+
+    Insert(string tableName, vector<string> vals){
+        this->tableName = tableName;
+        this->values = vals;
+    }
+};
+
 #endif

@@ -60,6 +60,10 @@ void SQLInterpreter::interpreteSelect(Select stmt) {
 
 }
 
+void SQLInterpreter::interpretInsert(Insert stmt) {
+
+}
+
 void SQLInterpreter::printRow(int index, vector<string> columns) {
     for (int i = 0; i < columns.size(); i++) {
         if (colTypes[columns[i]].compare("INT") == 0) {

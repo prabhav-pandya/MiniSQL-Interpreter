@@ -1,3 +1,0 @@
-/home/op/Projects/C/MiniSQL-Interpreter/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/op/Projects/C/MiniSQL-Interpreter/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/op/Projects/C/MiniSQL-Interpreter/cmake-build-debug/CMakeFiles/MiniRDBMS.dir
