@@ -26,6 +26,46 @@ CreateTable Parser::parseCreateTable() {
 }
 
 Insert Parser::parseInsert(){
+    // consume INSERT INTO
+    consume(INSERT, "Expected Token Insert");
+    consume(INTO, "Expected Token Into");
+
+    // read table name
+    string tableName;
+
+    if(peek().type==IDENTIFIER){
+        tableName = peek().lexeme;
+        advance();
+    }
+    else cerr<< "Expected table name";
+
+    // consume VALUES
+    consume(VALUES, "Expected Token Values");
+    consume(LEFT_PAREN, "Expected Parenthesis");
+
+    // consume values
+    vector<string> values;
+    while(peek().type!=RIGHT_PAREN){
+        if(peek().type==IDENTIFIER || peek().type==STRING){
+            values.push_back(peek().type==IDENTIFIER? peek().lexeme:peek().literal);
+            advance();
+        }
+        else{
+            cerr << "Expected values!";
+            exit(1);
+        }
+
+        if(peek().type==COMMA){
+            consume(COMMA, "");
+        }
+        else break;
+    }
+
+    consume(RIGHT_PAREN, "Expected )");
+
+    consume(SEMICOLON, "Expected ;");
+
+    return Insert(tableName, values);
 
 }
 
@@ -105,7 +145,10 @@ Select Parser::parseSelect() {
 }
 
 void Parser::consume(TokenType expected, string error) {
-    if (isAtEnd() || tokens[current].type != expected) cerr << error;
+    if (isAtEnd() || tokens[current].type != expected){
+        cerr << error;
+        exit(1);
+    }
     advance();
 }
 

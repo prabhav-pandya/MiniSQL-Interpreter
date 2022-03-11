@@ -23,6 +23,8 @@ Scanner::Scanner(string query) {
     keywords["having"] = HAVING;
     keywords["as"] = AS;
     keywords["quit"] = QUIT;
+    keywords["into"] = INTO;
+    keywords["values"] = VALUES;
 
     // data types
     keywords["int"] = TYPE;

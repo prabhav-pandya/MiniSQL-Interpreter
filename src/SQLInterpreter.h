@@ -22,7 +22,6 @@ public:
     void insertRow(string colName, string val, string type);
     void printRow(int index, vector<string> columns);
     bool doesRowSatisfy(int rowIdx, vector<Token> conditions);
-
     void interpreteCreateTable(CreateTable table);
 };
 

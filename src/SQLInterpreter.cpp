@@ -25,6 +25,12 @@ void SQLInterpreter::run(string query) {
             break;
         }
 
+        case INSERT : {
+            Insert stmt = parser.parseInsert();
+            interpretInsert(stmt);
+            break;
+        }
+
         case QUIT: {
             exit(0);
         }
@@ -36,7 +42,6 @@ void SQLInterpreter::run(string query) {
 };
 
 void SQLInterpreter::interpreteCreateTable(CreateTable stmt) {
-
 }
 
 void SQLInterpreter::interpreteSelect(Select stmt) {
@@ -61,7 +66,30 @@ void SQLInterpreter::interpreteSelect(Select stmt) {
 }
 
 void SQLInterpreter::interpretInsert(Insert stmt) {
+    createTableMap(stmt.tableName);
+    if(columns.size()!=stmt.values.size()){
+        cerr<<"Number of values don't match the columns in table: " + stmt.tableName<<endl;
+        exit(1);
+    }
 
+    fstream table;
+    table.open("../Relations/"+stmt.tableName, ios::app);
+
+    if(!table.is_open()){
+        cerr << "No such table found";
+        exit(1);
+    }
+
+    string rowDbFormat="";
+
+    for(string attr: stmt.values) rowDbFormat += attr + "#";
+
+    rowDbFormat = rowDbFormat.substr(0, rowDbFormat.size()-1);
+
+    table << rowDbFormat <<endl;
+
+    cout<<"Table " + stmt.tableName + " updated"<<endl;
+    table.close();
 }
 
 void SQLInterpreter::printRow(int index, vector<string> columns) {
@@ -118,6 +146,9 @@ void SQLInterpreter::createTableMap(string tableName) {
     string row;
 
     while (getline(tableRaw, row)) {
+
+        if(row.empty()) continue;
+
         vector<string> rowSplit = splitHashStr(row);
 
         for (int i = 0; i < rowSplit.size(); i++) {
