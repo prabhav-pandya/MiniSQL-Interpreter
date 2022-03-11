@@ -11,8 +11,17 @@ Stmt Parser::parse() {
 
 
 CreateTable Parser::parseCreateTable() {
+    string tableName;
+    vector<string> columnNames;
+    vector<Token> columnTypes;
+
     consume(CREATE, "Expected Token Create!");
     consume(TABLE, "Expected Token Table!");
+
+    // consume table name
+    if (peek().type == IDENTIFIER) tableName = peek().lexeme;
+    else cerr << "Table name not specified";
+    advance();
 }
 
 Select Parser::parseSelect() {
