@@ -47,24 +47,36 @@ void SQLInterpreter::run(string query) {
 };
 
 void SQLInterpreter::interpreteCreateTable(CreateTable stmt) {
-    fstream schema("../Relations/schema", ios_base::app);
-    schema << endl << createSchema(stmt);
+    fstream schema("../Relations/schema");
+    string line;
+    while (getline(schema, line)) {
+        if (line[stmt.tableName.size()] != '#') continue;
+        if (line.substr(0, stmt.tableName.size()) == stmt.tableName) {
+            cerr << "Duplicate Table Name!" << endl;
+            return;
+        }
+    }
     schema.close();
 
-    // TODO: check for duplicate table name
+    fstream tableSchema("../Relations/schema", ios_base::app);
+    tableSchema << endl << createSchema(stmt);
+    tableSchema.close();
 
     fstream table;
     table.open("../Relations/" + stmt.tableName, ios::out);
     table << ' ' << endl;
     table.close();
+
+    cout << "Table Successfully Created" << endl;
 }
 
-string SQLInterpreter::createSchema(const CreateTable& table) {
+
+string SQLInterpreter::createSchema(const CreateTable &table) {
     string schema = table.tableName;
     schema += "#";
 
     int numColumns = table.columnNames.size();
-    for(int i = 0; i < numColumns; i++) {
+    for (int i = 0; i < numColumns; i++) {
         schema += table.columnNames[i];
         schema += "#";
 
@@ -72,7 +84,7 @@ string SQLInterpreter::createSchema(const CreateTable& table) {
         transform(type.begin(), type.end(), type.begin(), ::toupper);
         schema += type;
 
-        if(i < numColumns - 1) {
+        if (i < numColumns - 1) {
             schema += "#";
         }
     }
@@ -103,28 +115,28 @@ void SQLInterpreter::interpreteSelect(Select stmt) {
 
 void SQLInterpreter::interpretInsert(Insert stmt) {
     createTableMap(stmt.tableName);
-    if(columns.size()!=stmt.values.size()){
-        cerr<<"Number of values don't match the columns in table: " + stmt.tableName<<endl;
+    if (columns.size() != stmt.values.size()) {
+        cerr << "Number of values don't match the columns in table: " + stmt.tableName << endl;
         exit(1);
     }
 
     fstream table;
-    table.open("../Relations/"+stmt.tableName, ios::app);
+    table.open("../Relations/" + stmt.tableName, ios::app);
 
-    if(!table.is_open()){
+    if (!table.is_open()) {
         cerr << "No such table found";
         exit(1);
     }
 
-    string rowDbFormat="";
+    string rowDbFormat = "";
 
-    for(string attr: stmt.values) rowDbFormat += attr + "#";
+    for (string attr: stmt.values) rowDbFormat += attr + "#";
 
-    rowDbFormat = rowDbFormat.substr(0, rowDbFormat.size()-1);
+    rowDbFormat = rowDbFormat.substr(0, rowDbFormat.size() - 1);
 
-    table << rowDbFormat <<endl;
+    table << rowDbFormat << endl;
 
-    cout<<"Table " + stmt.tableName + " updated"<<endl;
+    cout << "Table " + stmt.tableName + " updated" << endl;
     table.close();
 }
 
@@ -160,8 +172,8 @@ void SQLInterpreter::createTableMap(string tableName) {
     string line, tabStruct;
 
     while (schema) {
-        //cout<<line;
         getline(schema, line);
+        if (line[tableName.size()] != '#') continue;
         if (line.substr(0, tableName.size()) == tableName) {
             tabStruct = line;
             break;
