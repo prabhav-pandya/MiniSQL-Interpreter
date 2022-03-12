@@ -25,6 +25,7 @@ public:
     void interpretCreateTable(CreateTable table);
     void interpretDropTable(DropTable table);
     void interpretDelete(Delete stmt);
+    void interpretUpdate(Update stmt);
 
     bool checkForSemicolon(string basicString);
     string toLower(string str);

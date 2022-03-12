@@ -48,6 +48,12 @@ void SQLInterpreter::run(string query) {
             break;
         }
 
+        case UPDATE : {
+            Update stmt = parser.parseUpdate();
+            interpretUpdate(stmt);
+            break;
+        }
+
         case HELP: {
             Help stmt = parser.parseHelp();
             interpretHelp(stmt);
@@ -174,6 +180,47 @@ void SQLInterpreter::interpretDelete(Delete stmt){
 
     cout<<rowsAffected<<" rows affected"<<endl;
     tableFile.close();
+}
+
+void SQLInterpreter::interpretUpdate(Update stmt){
+    createTableMap(stmt.tableName);
+    clearTable(stmt.tableName);
+
+    ofstream tableRaw("../Relations/"+stmt.tableName, ios::app);
+
+    int rowsAffected=0;
+
+    for(int i=0;i<totalRows;i++){
+        if(doesRowSatisfy(i, stmt.conditions)){
+            rowsAffected++;
+            for(auto itr: stmt.attrValues){
+                if(colTypes[itr.first].compare("INT")==0){
+                    table<int>[itr.first][i] = stoi(itr.second);
+                }
+                else if(colTypes[itr.first].compare("STR")==0){
+                    table<string>[itr.first][i] = itr.second;
+                }
+            }
+        }
+
+        string row="";
+
+        for (auto column: columns){
+            if(colTypes[column].compare("INT")==0) {
+                row += to_string(table<int>[column][i]) + "#";
+            }
+            else if(colTypes[column].compare("STR")==0) {
+                row += table<string>[column][i] + "#";
+            }
+        }
+
+        row = row.substr(0, row.size()-1);
+
+        tableRaw<<row<<endl;
+    }
+
+    cout<<rowsAffected<<" rows affected"<<endl;
+    tableRaw.close();
 }
 
 void SQLInterpreter::interpretSelect(Select stmt) {
@@ -314,6 +361,11 @@ void SQLInterpreter::createTableMap(string tableName) {
     tableRaw.open("../Relations/" + tableName);
     string row;
 
+    if(!tableRaw.is_open()){
+        cerr<<"No such table exists"<<endl;
+        exit(1);
+    }
+
     while (getline(tableRaw, row)) {
 
 //        if(row.empty()) continue;
@@ -399,6 +451,21 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
+            } if (conditions[condIdx].type == BANG_EQUAL) {
+                condIdx++;
+                if (val != stoi(conditions[condIdx].lexeme)) {
+                    if (res == -1) res = 1;
+                    if (opr == AND) {
+                        res *= 1;
+                    } else res = 1;
+                    if (opr == OR && res == 1) return true;
+                } else {
+                    if (res == -1) res = 0;
+                    if (opr == AND) {
+                        res *= 0;
+                    }
+                    if (opr == AND && res == 0) return false;
+                }
             } else if (conditions[condIdx].type == LESS) {
                 condIdx++;
                 if (val < stoi(conditions[condIdx].lexeme)) {
@@ -466,6 +533,21 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
             } else if (conditions[condIdx].type == EQUAL) {
                 condIdx++;
                 if (val.compare(conditions[condIdx].literal) == 0) {
+                    if (res == -1) res = 1;
+                    if (opr == AND) {
+                        res *= 1;
+                    } else res = 1;
+                    if (opr == OR && res == 1) return true;
+                } else {
+                    if (res == -1) res = 0;
+                    if (opr == AND) {
+                        res *= 0;
+                    }
+                    if (opr == AND && res == 0) return false;
+                }
+            } if (conditions[condIdx].type == BANG_EQUAL) {
+                condIdx++;
+                if (val.compare(conditions[condIdx].literal)!=0) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;

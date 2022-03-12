@@ -37,6 +37,9 @@ public:
     Insert parseInsert();
     Help parseHelp();
     Delete parseDelete();
+    Update parseUpdate();
+
+    vector<Token> parseConditions();
 
     Token peek();
     Token advance();

@@ -134,47 +134,11 @@ Select Parser::parseSelect() {
     if (peek().type == IDENTIFIER) tableName = peek().lexeme;
     else cerr << "Table name not specified";
     advance();
-    vector<Token> condition;
 
-    // check for semicolon
-    if (peek().type == SEMICOLON) consume(SEMICOLON, "Expected Token Semicolon!");
+    vector<Token> condition = parseConditions();
 
-    else {
-        // if there is a WHERE, consume and store the condition
-        if (!isAtEnd()) {
-            consume(WHERE, "Syntax Error!");
-            while (peek().type != SEMICOLON) {
-                if (isAtEnd()) cerr << "Syntax error!";
-//                condition.push_back(peek());
-//                advance();
-                if (peek().type == IDENTIFIER) {
-                    condition.push_back(peek());
-                    advance();
-                } else cerr << "Syntax error!";
+    consume(SEMICOLON, "Expected ;");
 
-                if (peek().type != SEMICOLON) {
-                    vector<TokenType> operators = {BANG, BANG_EQUAL,
-                                                   EQUAL, GREATER, GREATER_EQUAL,
-                                                   LESS, LESS_EQUAL};
-                    if (find(operators.begin(), operators.end(), peek().type) == operators.end()) {
-                        cerr << "Syntax error!";
-                    }
-                    condition.push_back(peek());
-                    advance();
-
-                    if (peek().type == STRING || peek().type == IDENTIFIER) {
-                        condition.push_back(peek());
-                        advance();
-                    } else cerr << "Syntax error!";
-                }
-
-                if (peek().type == AND || peek().type == OR) {
-                    condition.push_back(peek());
-                    advance();
-                }
-            }
-        } else cerr << "Syntax error!";
-    }
     return Select(tableName, columns, condition);
 }
 
@@ -186,51 +150,64 @@ Delete Parser::parseDelete(){
     // consume table name
     string tableName;
     if(peek().type==IDENTIFIER){
-        tableName = peek().literal;
+        tableName = peek().lexeme;
         advance();
     }
     else {
         consume(IDENTIFIER, "Expected table name");
     }
 
-    vector<Token> conditions;
-    if(peek().type==WHERE){
-        consume(WHERE, "");
-        while(peek().type!=SEMICOLON){
-            vector<TokenType> comparisonOps = {LESS_EQUAL, LESS, EQUAL, GREATER, GREATER_EQUAL};
-
-            if(peek().type==IDENTIFIER){
-                conditions.push_back(peek());
-                advance();
-            }
-            else consume(IDENTIFIER, "Syntax error");
-
-            if(find(comparisonOps.begin(), comparisonOps.end(), peek().type)!=comparisonOps.end()){
-                conditions.push_back(peek());
-                advance();
-            }
-            else {
-                cerr << "Syntax error";
-                exit(1);
-            }
-
-            if(peek().type==IDENTIFIER || peek().type==STRING){
-                conditions.push_back(peek());
-                advance();
-            }
-            else consume(IDENTIFIER, "Syntax error");
-
-            if(peek().type==AND || peek().type==OR){
-                conditions.push_back(peek());
-                advance();
-            }
-            else break;
-        }
-    }
+    vector<Token> conditions = parseConditions();
 
     consume(SEMICOLON, "Expected ;");
 
     return Delete(tableName, conditions);
+}
+
+Update Parser::parseUpdate(){
+    // UPDATE table_name SET attr1 = val1, attr2 = val2… WHERE condition_list;
+    // consume UPDATE
+    consume(UPDATE, "Update token expected");
+
+    // consume table name
+    string tableName;
+    if(peek().type==IDENTIFIER) tableName = peek().lexeme;
+    else consume(IDENTIFIER, "Expected table name!");
+    advance();
+    // consume SET
+    consume(SET, "Set token expected");
+
+    map<string, string> attrValues;
+    while(peek().type!=WHERE){
+        string attribute, value;
+        if(peek().type==IDENTIFIER){
+            attribute = peek().lexeme;
+            advance();
+        }
+        else consume(IDENTIFIER, "Syntax error");
+
+        consume(EQUAL, "Syntax error");
+
+        if(peek().type==IDENTIFIER || peek().type==STRING){
+            value = peek().type==IDENTIFIER? peek().lexeme:peek().literal;
+            advance();
+        } else {
+            cerr << "Unexpected value provided";
+            exit(1);
+        }
+        attrValues[attribute] = value;
+
+        if(peek().type==COMMA){
+            consume(COMMA, "");
+        }
+        else break;
+    }
+
+    vector<Token> conditions = parseConditions();
+
+    consume(SEMICOLON, "Expected ;");
+
+    return Update(tableName, conditions, attrValues);
 }
 
 Help Parser::parseHelp() {
@@ -273,8 +250,46 @@ Help Parser::parseHelp() {
     }
 }
 
+vector<Token> Parser::parseConditions(){
+    vector<Token> conditions;
+    if(peek().type==WHERE){
+        consume(WHERE, "");
+        while(peek().type!=SEMICOLON){
+            vector<TokenType> comparisonOps = {LESS_EQUAL, LESS, EQUAL, GREATER, GREATER_EQUAL, BANG_EQUAL};
+
+            if(peek().type==IDENTIFIER){
+                conditions.push_back(peek());
+                advance();
+            }
+            else consume(IDENTIFIER, "Syntax error");
+
+            if(find(comparisonOps.begin(), comparisonOps.end(), peek().type)!=comparisonOps.end()){
+                conditions.push_back(peek());
+                advance();
+            }
+            else {
+                cerr << "Syntax error";
+                exit(1);
+            }
+
+            if(peek().type==IDENTIFIER || peek().type==STRING){
+                conditions.push_back(peek());
+                advance();
+            }
+            else consume(IDENTIFIER, "Syntax error");
+
+            if(peek().type==AND || peek().type==OR){
+                conditions.push_back(peek());
+                advance();
+            }
+            else break;
+        }
+    }
+    return conditions;
+}
+
 void Parser::consume(TokenType expected, string error) {
-    if (isAtEnd() || tokens[current].type != expected) cerr << error;
+    if (isAtEnd() || tokens[current].type != expected) cerr << error<<endl;
     advance();
 }
 

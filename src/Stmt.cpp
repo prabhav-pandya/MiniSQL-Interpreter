@@ -45,6 +45,20 @@ public:
     }
 };
 
+class Update : public Stmt {
+public:
+    string tableName;
+    map<string, string> attrValues;
+    vector<Token> conditions;
+
+
+    Update(string tableName, vector<Token> conditions, map<string, string> attrValues){
+        this->tableName = tableName;
+        this->attrValues = attrValues;
+        this->conditions = conditions;
+    }
+};
+
 class Insert : public Stmt {
 public:
     string tableName;
