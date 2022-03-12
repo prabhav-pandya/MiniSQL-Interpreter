@@ -26,6 +26,7 @@ Scanner::Scanner(string query) {
     keywords["quit"] = QUIT;
     keywords["into"] = INTO;
     keywords["values"] = VALUES;
+    keywords["delete"] = DELETE;
 
     // data types
     keywords["int"] = TYPE;

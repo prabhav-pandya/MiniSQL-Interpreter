@@ -16,16 +16,19 @@ class SQLInterpreter {
 public:
     SQLInterpreter();
     void run(string query);
-    void interpreteSelect(Select stmt);
+    void interpretSelect(Select stmt);
     void interpretInsert(Insert stmt);
     void createTableMap(string tableName);
     void insertRow(string colName, string val, string type);
     void printRow(int index, vector<string> columns);
     bool doesRowSatisfy(int rowIdx, vector<Token> conditions);
-    void interpreteCreateTable(CreateTable table);
+    void interpretCreateTable(CreateTable table);
     void interpretDropTable(DropTable table);
+    void interpretDelete(Delete stmt);
 
     bool checkForSemicolon(string basicString);
+    string toLower(string str);
+    void clearTable(string tableName);
 
     string createSchema(const CreateTable& table);
 

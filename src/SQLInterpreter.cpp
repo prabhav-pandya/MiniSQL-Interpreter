@@ -20,7 +20,7 @@ void SQLInterpreter::run(string query) {
     switch (tokens[0].type) {
         case CREATE : {
             CreateTable stmt = parser.parseCreateTable();
-            interpreteCreateTable(stmt);
+            interpretCreateTable(stmt);
             break;
         }
 
@@ -32,13 +32,19 @@ void SQLInterpreter::run(string query) {
 
         case SELECT : {
             Select stmt = parser.parseSelect();
-            interpreteSelect(stmt);
+            interpretSelect(stmt);
             break;
         }
 
         case INSERT : {
             Insert stmt = parser.parseInsert();
             interpretInsert(stmt);
+            break;
+        }
+
+        case DELETE : {
+            Delete stmt = parser.parseDelete();
+            interpretDelete(stmt);
             break;
         }
 
@@ -58,12 +64,12 @@ void SQLInterpreter::run(string query) {
     }
 };
 
-void SQLInterpreter::interpreteCreateTable(CreateTable stmt) {
+void SQLInterpreter::interpretCreateTable(CreateTable table) {
     fstream schema("../Relations/schema");
     string line;
     while (getline(schema, line)) {
-        if (line[stmt.tableName.size()] != '#') continue;
-        if (line.substr(0, stmt.tableName.size()) == stmt.tableName) {
+        if (line[table.tableName.size()] != '#') continue;
+        if (line.substr(0, table.tableName.size()) == table.tableName) {
             cerr << "Duplicate Table Name!" << endl;
             return;
         }
@@ -71,13 +77,13 @@ void SQLInterpreter::interpreteCreateTable(CreateTable stmt) {
     schema.close();
 
     fstream tableSchema("../Relations/schema", ios_base::app);
-    tableSchema << endl << createSchema(stmt);
+    tableSchema << endl << createSchema(table);
     tableSchema.close();
 
-    fstream table;
-    table.open("../Relations/" + stmt.tableName, ios::out);
-    table << ' ' << endl;
-    table.close();
+    fstream tableFile;
+    tableFile.open("../Relations/" + table.tableName, ios::out);
+    tableFile << ' ' << endl;
+    tableFile.close();
 
     cout << "Table Successfully Created" << endl;
 }
@@ -136,7 +142,41 @@ void SQLInterpreter::interpretDropTable(DropTable stmt) {
     cout << "Table Dropped" << endl;
 }
 
-void SQLInterpreter::interpreteSelect(Select stmt) {
+void SQLInterpreter::interpretDelete(Delete stmt){
+    createTableMap(stmt.tableName);
+    clearTable(stmt.tableName);
+
+    if(stmt.conditions.empty()){
+        cout<<totalRows<< " rows affected"<<endl;
+        return;
+    }
+
+    ofstream tableFile("../Relations/"+stmt.tableName, ios::app);
+
+    int rowsAffected = 0;
+
+    for(int i=0;i<totalRows;i++){
+        if(!doesRowSatisfy(i, stmt.conditions)){
+            string row="";
+            for(string column: columns){
+                if(colTypes[column].compare("STR")==0){
+                    row += table<string>[column][i] + "#";
+                }
+                else if(colTypes[column].compare("INT")==0){
+                    row += to_string(table<int>[column][i]) + "#";
+                }
+            }
+            row = row.substr(0, row.size()-1);
+            tableFile<<row<<endl;
+        }
+        else rowsAffected++;
+    }
+
+    cout<<rowsAffected<<" rows affected"<<endl;
+    tableFile.close();
+}
+
+void SQLInterpreter::interpretSelect(Select stmt) {
     createTableMap(stmt.tableName);
 
     vector<string> columnsToPrint;
@@ -210,7 +250,7 @@ void SQLInterpreter::interpretHelp(Help stmt) {
         }
 
         case 3: {
-            auto commandDescription = stmt.commandDescriptions.find(stmt.commandName);
+            auto commandDescription = stmt.commandDescriptions.find(toLower(stmt.commandName));
             cout << commandDescription->second;
             break;
         }
@@ -248,6 +288,9 @@ void SQLInterpreter::createTableMap(string tableName) {
     ifstream schema;
     schema.open("../Relations/schema");
     string line, tabStruct;
+
+    table<int>.clear();
+    table<string>.clear();
 
     while (schema) {
         getline(schema, line);
@@ -299,7 +342,7 @@ void SQLInterpreter::insertRow(string colName, string val, string type) {
 }
 
 // this function is only for specific conditional queries
-// this code must never be used in industry systems!
+// THis function makes me wanna cry
 bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
     // For simplicity we're assuming that there will be same operator in a single condition (AND/OR)
     if (conditions.size() == 0) return true;
@@ -479,4 +522,19 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
 bool SQLInterpreter::checkForSemicolon(string query) {
     if (query[query.size() - 1] != ';') return false;
     else return true;
+}
+
+string SQLInterpreter::toLower(string str){
+    string res = "";
+    for(char c: str){
+        if(c==' ') continue;
+        res += tolower(c);
+    }
+    return res;
+}
+
+void SQLInterpreter::clearTable(string tableName){
+    ofstream table("../Relations/"+tableName);
+    table<<"";
+    table.close();
 }

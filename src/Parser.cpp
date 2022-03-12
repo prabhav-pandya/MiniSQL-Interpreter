@@ -178,6 +178,61 @@ Select Parser::parseSelect() {
     return Select(tableName, columns, condition);
 }
 
+Delete Parser::parseDelete(){
+    // consume DELETE & FROM
+    consume(DELETE, "Delete token expected");
+    consume(FROM, "FROM token expected");
+
+    // consume table name
+    string tableName;
+    if(peek().type==IDENTIFIER){
+        tableName = peek().literal;
+        advance();
+    }
+    else {
+        consume(IDENTIFIER, "Expected table name");
+    }
+
+    vector<Token> conditions;
+    if(peek().type==WHERE){
+        consume(WHERE, "");
+        while(peek().type!=SEMICOLON){
+            vector<TokenType> comparisonOps = {LESS_EQUAL, LESS, EQUAL, GREATER, GREATER_EQUAL};
+
+            if(peek().type==IDENTIFIER){
+                conditions.push_back(peek());
+                advance();
+            }
+            else consume(IDENTIFIER, "Syntax error");
+
+            if(find(comparisonOps.begin(), comparisonOps.end(), peek().type)!=comparisonOps.end()){
+                conditions.push_back(peek());
+                advance();
+            }
+            else {
+                cerr << "Syntax error";
+                exit(1);
+            }
+
+            if(peek().type==IDENTIFIER || peek().type==STRING){
+                conditions.push_back(peek());
+                advance();
+            }
+            else consume(IDENTIFIER, "Syntax error");
+
+            if(peek().type==AND || peek().type==OR){
+                conditions.push_back(peek());
+                advance();
+            }
+            else break;
+        }
+    }
+
+    consume(SEMICOLON, "Expected ;");
+
+    return Delete(tableName, conditions);
+}
+
 Help Parser::parseHelp() {
     string tableName;
     string commandName;

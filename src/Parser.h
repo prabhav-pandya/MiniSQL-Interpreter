@@ -36,6 +36,7 @@ public:
     DropTable parseDropTable();
     Insert parseInsert();
     Help parseHelp();
+    Delete parseDelete();
 
     Token peek();
     Token advance();

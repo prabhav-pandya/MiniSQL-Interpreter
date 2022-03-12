@@ -56,6 +56,17 @@ public:
     }
 };
 
+class Delete : public Stmt {
+public:
+    string tableName;
+    vector<Token> conditions;
+
+    Delete(string tableName, vector<Token> conditions){
+        this->tableName = tableName;
+        this->conditions = conditions;
+    }
+};
+
 class Help : public Stmt {
 public:
     // 1 -> HELP TABLES -> List all Tables
