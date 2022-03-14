@@ -88,7 +88,6 @@ void SQLInterpreter::interpretCreateTable(CreateTable table) {
 
     fstream tableFile;
     tableFile.open("../Relations/" + table.tableName, ios::out);
-    tableFile << ' ' << endl;
     tableFile.close();
 
     cout << "Table Successfully Created" << endl;
