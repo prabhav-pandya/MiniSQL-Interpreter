@@ -170,6 +170,9 @@ void SQLInterpreter::interpretDelete(Delete stmt){
                 else if(colTypes[column].compare("INT")==0){
                     row += to_string(table<int>[column][i]) + "#";
                 }
+                else if(colTypes[column].compare("DEC")==0){
+                    row += to_string(table<double>[column][i]) + "#";
+                }
             }
             row = row.substr(0, row.size()-1);
             tableFile<<row<<endl;
@@ -199,6 +202,9 @@ void SQLInterpreter::interpretUpdate(Update stmt){
                 else if(colTypes[itr.first].compare("STR")==0){
                     table<string>[itr.first][i] = itr.second;
                 }
+                else if(colTypes[itr.first].compare("DEC")==0){
+                    table<double>[itr.first][i] = stod(itr.second);
+                }
             }
         }
 
@@ -210,6 +216,9 @@ void SQLInterpreter::interpretUpdate(Update stmt){
             }
             else if(colTypes[column].compare("STR")==0) {
                 row += table<string>[column][i] + "#";
+            }
+            else if(colTypes[column].compare("DEC")==0) {
+                row += to_string(table<double>[column][i]) + "#";
             }
         }
 
@@ -311,6 +320,9 @@ void SQLInterpreter::printRow(int index, vector<string> columns) {
         } else if (colTypes[columns[i]].compare("STR") == 0) {
             cout << table<string>[columns[i]][index] << " ";
         }
+        else if (colTypes[columns[i]].compare("DEC") == 0) {
+            cout << table<double>[columns[i]][index] << " ";
+        }
     }
     cout << endl;
 }
@@ -389,6 +401,10 @@ void SQLInterpreter::insertRow(string colName, string val, string type) {
 
     if (type == "STR") {
         table<string>[colName].push_back(val);
+    }
+
+    if (type == "DEC") {
+        table<double>[colName].push_back(stod(val));
     }
 }
 
@@ -578,6 +594,101 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
             if (conditions[condIdx].type == LESS_EQUAL) {
                 condIdx++;
                 if (val.compare(conditions[condIdx].literal) > 0) {
+                    if (res == -1) res = 1;
+                    if (opr == AND) {
+                        res *= 1;
+                    } else res = 1;
+                    if (opr == OR && res == 1) return true;
+                } else {
+                    if (res == -1) res = 0;
+                    if (opr == AND) {
+                        res *= 0;
+                    }
+                    if (opr == AND && res == 0) return false;
+                }
+            }
+        }
+        else if (colTypes[attrName].compare("DEC") == 0) {
+            int val = table<double>[attrName][rowIdx];
+            condIdx++;
+            if (conditions[condIdx].type == GREATER_EQUAL) {
+                condIdx++;
+                if (val >= stod(conditions[condIdx].lexeme)) {
+                    if (res == -1) res = 1;
+                    if (opr == AND) {
+                        res *= 1;
+                    } else res = 1;
+                    if (opr == OR && res == 1) return true;
+                } else {
+                    if (res == -1) res = 0;
+                    if (opr == AND) {
+                        res *= 0;
+                    }
+                    if (opr == AND && res == 0) return false;
+                }
+            } else if (conditions[condIdx].type == GREATER) {
+                condIdx++;
+                if (val > stod(conditions[condIdx].lexeme)) {
+                    if (res == -1) res = 1;
+                    if (opr == AND) {
+                        res *= 1;
+                    } else res = 1;
+                    if (opr == OR && res == 1) return true;
+                } else {
+                    if (res == -1) res = 0;
+                    if (opr == AND) {
+                        res *= 0;
+                    }
+                    if (opr == AND && res == 0) return false;
+                }
+            } else if (conditions[condIdx].type == EQUAL) {
+                condIdx++;
+                if (val == stod(conditions[condIdx].lexeme)) {
+                    if (res == -1) res = 1;
+                    if (opr == AND) {
+                        res *= 1;
+                    } else res = 1;
+                    if (opr == OR && res == 1) return true;
+                } else {
+                    if (res == -1) res = 0;
+                    if (opr == AND) {
+                        res *= 0;
+                    }
+                    if (opr == AND && res == 0) return false;
+                }
+            } if (conditions[condIdx].type == BANG_EQUAL) {
+                condIdx++;
+                if (val != stod(conditions[condIdx].lexeme)) {
+                    if (res == -1) res = 1;
+                    if (opr == AND) {
+                        res *= 1;
+                    } else res = 1;
+                    if (opr == OR && res == 1) return true;
+                } else {
+                    if (res == -1) res = 0;
+                    if (opr == AND) {
+                        res *= 0;
+                    }
+                    if (opr == AND && res == 0) return false;
+                }
+            } else if (conditions[condIdx].type == LESS) {
+                condIdx++;
+                if (val < stod(conditions[condIdx].lexeme)) {
+                    if (res == -1) res = 1;
+                    if (opr == AND) {
+                        res *= 1;
+                    } else res = 1;
+                    if (opr == OR && res == 1) return true;
+                } else {
+                    if (res == -1) res = 0;
+                    if (opr == AND) {
+                        res *= 0;
+                    }
+                    if (opr == AND && res == 0) return false;
+                }
+            } else if (conditions[condIdx].type == LESS_EQUAL) {
+                condIdx++;
+                if (val <= stod(conditions[condIdx].lexeme)) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
