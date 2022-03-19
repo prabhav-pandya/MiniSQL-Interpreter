@@ -29,6 +29,15 @@ Scanner::Scanner(string query) {
     keywords["delete"] = DELETE;
     keywords["set"] = SET;
 
+    // domain constraints
+    keywords["check"] = CHECK;
+    keywords["primary"] = PRIMARY;
+    keywords["foreign"] = FOREIGN;
+    keywords["not"] = NOT;
+    keywords["key"] = KEY;
+    keywords["null"] = NULL_TOKEN;
+    keywords["unique"] = UNIQUE;
+
     // data types
     keywords["int"] = TYPE;
     keywords["str"] = TYPE;
@@ -53,6 +62,7 @@ void Scanner::scanToken() {
         case '/': addToken(SLASH); break;
         case '-': addToken(MINUS); break;
         case ',': addToken(COMMA); break;
+        case '#': addToken(HASH); break;
         case '>':
             addToken(match('=')?GREATER_EQUAL:GREATER);
             break;

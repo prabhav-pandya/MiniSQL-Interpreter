@@ -9,7 +9,7 @@ SQLInterpreter::SQLInterpreter() {
 
 void SQLInterpreter::run(string query) {
     if (!checkForSemicolon(query)) {
-        cerr << "Expected a Semicolon!" << endl;
+        cerr << "Expected a ;" << endl;
         return;
     }
 
@@ -267,15 +267,28 @@ void SQLInterpreter::interpretInsert(Insert stmt) {
         exit(1);
     }
 
-    string rowDbFormat = "";
+    // insert values in table
+    for(int i=0;i<columns.size();i++){
+        insertRow(columns[i], stmt.values[i], colTypes[columns[i]]);
+    }
+    totalRows++;
 
-    for (string attr: stmt.values) rowDbFormat += attr + "#";
+    // check if values satisfy attribute constrains
+    if(doesSatisfyConstraints(totalRows-1)){
+        string rowDbFormat = "";
 
-    rowDbFormat = rowDbFormat.substr(0, rowDbFormat.size() - 1);
+        for (string attr: stmt.values) rowDbFormat += attr + "#";
 
-    table << rowDbFormat << endl;
+        rowDbFormat = rowDbFormat.substr(0, rowDbFormat.size() - 1);
 
-    cout << "Table " + stmt.tableName + " updated" << endl;
+        table << rowDbFormat << endl;
+
+        cout << "Table " + stmt.tableName + " updated" << endl;
+    }
+    else {
+        cerr<<"Attribute constraints not satisfied!"<<endl;
+    }
+
     table.close();
 }
 
@@ -345,20 +358,24 @@ vector<string> splitHashStr(string text) {
 void SQLInterpreter::createTableMap(string tableName) {
     ifstream schema;
     schema.open("../Relations/schema");
-    string line, tabStruct;
+    string line, tabStruct, constraintStr;
 
     table<int>.clear();
     table<string>.clear();
+    table<double>.clear();
 
     while (schema) {
         getline(schema, line);
         if (line[tableName.size()] != '#') continue;
         if (line.substr(0, tableName.size()) == tableName) {
             tabStruct = line;
+            getline(schema, constraintStr);
             break;
         }
     }
-    //cout<<tabStruct<<endl;
+    // store attribute constraints
+    createConstraints(constraintStr);
+
     vector<string> tableColType = splitHashStr(tabStruct);
 
     for (int i = 1; i < tableColType.size(); i += 2) {
@@ -709,6 +726,28 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
     }
     if (res == 1) return true;
     else return false;
+}
+
+void SQLInterpreter::createConstraints(string constraintStr) {
+    Scanner scanner(constraintStr);
+    vector<Token> constrTokens = scanner.scanTokens();
+    vector<Token> attrConstr;
+
+    for(auto token: constrTokens){
+        if(token.type==HASH){
+            constraints.push_back(attrConstr);
+            attrConstr = vector<Token>();
+            continue;
+        }
+        attrConstr.push_back(token);
+    }
+}
+
+bool SQLInterpreter::doesSatisfyConstraints(int rowIdx) {
+    for(int i=0;i<constraints.size();i++){
+        if(!doesRowSatisfy(rowIdx, constraints[i])) return false;
+    }
+    return true;
 }
 
 bool SQLInterpreter::checkForSemicolon(string query) {

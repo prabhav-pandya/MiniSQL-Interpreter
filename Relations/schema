@@ -1,1 +1,2 @@
 students#id#INT#name#STR#dept#STR
+id>=10#name!="CS"#dept!="OP"

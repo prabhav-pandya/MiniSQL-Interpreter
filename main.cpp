@@ -3,6 +3,11 @@
 
 using namespace std;
 
+/*
+ * Check constraint while INSERT
+ * Add constraint while CREATE TABLE
+ * */
+
 int main() {
     string query;
     for (;;) {
