@@ -14,6 +14,8 @@ class SQLInterpreter {
     vector<string> columns;
     vector<vector<Token>> constraints;
     int totalRows;
+    int minRowWidth;
+
 public:
     SQLInterpreter();
     void run(string query);
@@ -27,6 +29,7 @@ public:
     void createTableMap(string tableName);
     void insertRow(string colName, string val, string type);
     void printRow(int index, vector<string> columns);
+    void printWithSpaces(const string &text);
     bool doesRowSatisfy(int rowIdx, vector<Token> conditions);
     void clearTable(string tableName);
 
@@ -37,7 +40,7 @@ public:
     string toLower(string str);
 
     string createSchema(const CreateTable& table);
-
+    vector<string> splitHashStr(string text);
     void interpretHelp(Help help);
 };
 

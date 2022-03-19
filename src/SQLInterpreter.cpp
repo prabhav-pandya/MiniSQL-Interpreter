@@ -5,6 +5,7 @@ map<string, vector<T>> table;
 
 SQLInterpreter::SQLInterpreter() {
     totalRows = 0;
+    minRowWidth = 10;
 }
 
 void SQLInterpreter::run(string query) {
@@ -240,16 +241,15 @@ void SQLInterpreter::interpretSelect(Select stmt) {
     else columnsToPrint = stmt.columnNames;
 
     for (int i = 0; i < columnsToPrint.size(); i++) {
-        cout << columnsToPrint[i] << " ";
+        printWithSpaces(columnsToPrint[i]);
     }
     cout << endl;
 
-    for (int i = 0; i < totalRows; i++) {
+    for (int i = 0; i < this->totalRows; i++) {
         if (doesRowSatisfy(i, stmt.condition)) {
             printRow(i, columnsToPrint);
         }
     }
-
 }
 
 void SQLInterpreter::interpretInsert(Insert stmt) {
@@ -325,27 +325,39 @@ void SQLInterpreter::interpretHelp(Help stmt) {
     }
 }
 
-
 void SQLInterpreter::printRow(int index, vector<string> columns) {
     for (int i = 0; i < columns.size(); i++) {
         if (colTypes[columns[i]].compare("INT") == 0) {
-            cout << table<int>[columns[i]][index] << " ";
+            printWithSpaces(to_string(table<int>[columns[i]][index]));
         } else if (colTypes[columns[i]].compare("STR") == 0) {
-            cout << table<string>[columns[i]][index] << " ";
+            printWithSpaces(table<string>[columns[i]][index]);
         }
         else if (colTypes[columns[i]].compare("DEC") == 0) {
-            cout << table<double>[columns[i]][index] << " ";
+            printWithSpaces(to_string(table<double>[columns[i]][index]));
         }
     }
     cout << endl;
 }
 
-vector<string> splitHashStr(string text) {
+void SQLInterpreter::printWithSpaces(const string &text) {
+    int spacesLeft = minRowWidth - text.size();
+    cout << text;
+
+    for(int i = 0; i < spacesLeft; i++) {
+        cout << " ";
+    }
+}
+vector<string> SQLInterpreter::splitHashStr(string text) {
     vector<string> splitArray;
     string colName = "";
     for (int i = 0; i < text.size(); i++) {
         if (text[i] == '#') {
             splitArray.push_back(colName);
+
+            if(colName.size() > minRowWidth) {
+                minRowWidth = colName.size();
+            }
+
             colName = "";
             continue;
         }
