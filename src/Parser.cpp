@@ -1,6 +1,7 @@
 #include "Parser.h"
 
 Parser::Parser(vector<Token> tokensList) {
+    current=0;
     for (auto token: tokensList) {
         tokens.push_back(token);
     }
@@ -290,7 +291,7 @@ vector<Token> Parser::parseConditions(){
 
 void Parser::consume(TokenType expected, string error) {
     if (isAtEnd() || tokens[current].type != expected) cerr << error<<endl;
-    advance();
+    current++;
 }
 
 Token Parser::peek() {

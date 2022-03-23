@@ -26,7 +26,7 @@ table -> IDENTIFIER
 
 class Parser {
  vector<Token> tokens;
- int current = 0;
+ int current;
 public:
     Parser(vector<Token> tokensList);
     Stmt parse();

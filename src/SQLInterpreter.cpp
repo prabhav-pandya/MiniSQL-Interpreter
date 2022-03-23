@@ -1,11 +1,8 @@
 #include "SQLInterpreter.h"
 
-template<typename T>
-map<string, vector<T>> table;
 
 SQLInterpreter::SQLInterpreter() {
-    totalRows = 0;
-    minRowWidth = 10;
+    table = Table();
 }
 
 void SQLInterpreter::run(string query) {
@@ -153,7 +150,7 @@ void SQLInterpreter::interpretDelete(Delete stmt){
     clearTable(stmt.tableName);
 
     if(stmt.conditions.empty()){
-        cout<<totalRows<< " rows affected"<<endl;
+        cout<<table.totalRows<< " rows affected"<<endl;
         return;
     }
 
@@ -161,19 +158,11 @@ void SQLInterpreter::interpretDelete(Delete stmt){
 
     int rowsAffected = 0;
 
-    for(int i=0;i<totalRows;i++){
+    for(int i=0;i<table.totalRows;i++){
         if(!doesRowSatisfy(i, stmt.conditions)){
             string row="";
-            for(string column: columns){
-                if(colTypes[column].compare("STR")==0){
-                    row += table<string>[column][i] + "#";
-                }
-                else if(colTypes[column].compare("INT")==0){
-                    row += to_string(table<int>[column][i]) + "#";
-                }
-                else if(colTypes[column].compare("DEC")==0){
-                    row += to_string(table<double>[column][i]) + "#";
-                }
+            for(string column: table.columns){
+                row += table.getElement(column, i) + "#";
             }
             row = row.substr(0, row.size()-1);
             tableFile<<row<<endl;
@@ -193,34 +182,18 @@ void SQLInterpreter::interpretUpdate(Update stmt){
 
     int rowsAffected=0;
 
-    for(int i=0;i<totalRows;i++){
+    for(int i=0;i<table.totalRows;i++){
         if(doesRowSatisfy(i, stmt.conditions)){
             rowsAffected++;
             for(auto itr: stmt.attrValues){
-                if(colTypes[itr.first].compare("INT")==0){
-                    table<int>[itr.first][i] = stoi(itr.second);
-                }
-                else if(colTypes[itr.first].compare("STR")==0){
-                    table<string>[itr.first][i] = itr.second;
-                }
-                else if(colTypes[itr.first].compare("DEC")==0){
-                    table<double>[itr.first][i] = stod(itr.second);
-                }
+                table.updateTable(itr.first, i, itr.second);
             }
         }
 
         string row="";
 
-        for (auto column: columns){
-            if(colTypes[column].compare("INT")==0) {
-                row += to_string(table<int>[column][i]) + "#";
-            }
-            else if(colTypes[column].compare("STR")==0) {
-                row += table<string>[column][i] + "#";
-            }
-            else if(colTypes[column].compare("DEC")==0) {
-                row += to_string(table<double>[column][i]) + "#";
-            }
+        for (auto column: table.columns){
+            row += table.getElement(column, i)+"#";
         }
 
         row = row.substr(0, row.size()-1);
@@ -237,7 +210,7 @@ void SQLInterpreter::interpretSelect(Select stmt) {
 
     vector<string> columnsToPrint;
 
-    if (stmt.columnNames[0].compare("*") == 0) columnsToPrint = columns;
+    if (stmt.columnNames[0].compare("*") == 0) columnsToPrint = table.columns;
     else columnsToPrint = stmt.columnNames;
 
     for (int i = 0; i < columnsToPrint.size(); i++) {
@@ -245,7 +218,7 @@ void SQLInterpreter::interpretSelect(Select stmt) {
     }
     cout << endl;
 
-    for (int i = 0; i < this->totalRows; i++) {
+    for (int i = 0; i < table.totalRows; i++) {
         if (doesRowSatisfy(i, stmt.condition)) {
             printRow(i, columnsToPrint);
         }
@@ -254,34 +227,33 @@ void SQLInterpreter::interpretSelect(Select stmt) {
 
 void SQLInterpreter::interpretInsert(Insert stmt) {
     createTableMap(stmt.tableName);
-    if (columns.size() != stmt.values.size()) {
+    if (table.columns.size() != stmt.values.size()) {
         cerr << "Number of values don't match the columns in table: " + stmt.tableName << endl;
         exit(1);
     }
 
-    fstream table;
-    table.open("../Relations/" + stmt.tableName, ios::app);
+    fstream tableFile;
+    tableFile.open("../Relations/" + stmt.tableName, ios::app);
 
-    if (!table.is_open()) {
+    if (!tableFile.is_open()) {
         cerr << "No such table found";
         exit(1);
     }
-
     // insert values in table
-    for(int i=0;i<columns.size();i++){
-        insertRow(columns[i], stmt.values[i], colTypes[columns[i]]);
+    for(int i=0;i<table.columns.size();i++){
+        insertRow(table.columns[i], stmt.values[i], table.colTypes[table.columns[i]]);
     }
-    totalRows++;
+    table.totalRows++;
 
     // check if values satisfy attribute constrains
-    if(doesSatisfyConstraints(totalRows-1)){
+    if(doesSatisfyConstraints(table.totalRows-1)){
         string rowDbFormat = "";
 
         for (string attr: stmt.values) rowDbFormat += attr + "#";
 
         rowDbFormat = rowDbFormat.substr(0, rowDbFormat.size() - 1);
 
-        table << rowDbFormat << endl;
+        tableFile << rowDbFormat << endl;
 
         cout << "Table " + stmt.tableName + " updated" << endl;
     }
@@ -289,7 +261,7 @@ void SQLInterpreter::interpretInsert(Insert stmt) {
         cerr<<"Attribute constraints not satisfied!"<<endl;
     }
 
-    table.close();
+    tableFile.close();
 }
 
 void SQLInterpreter::interpretHelp(Help stmt) {
@@ -327,20 +299,13 @@ void SQLInterpreter::interpretHelp(Help stmt) {
 
 void SQLInterpreter::printRow(int index, vector<string> columns) {
     for (int i = 0; i < columns.size(); i++) {
-        if (colTypes[columns[i]].compare("INT") == 0) {
-            printWithSpaces(to_string(table<int>[columns[i]][index]));
-        } else if (colTypes[columns[i]].compare("STR") == 0) {
-            printWithSpaces(table<string>[columns[i]][index]);
-        }
-        else if (colTypes[columns[i]].compare("DEC") == 0) {
-            printWithSpaces(to_string(table<double>[columns[i]][index]));
-        }
+        printWithSpaces(table.getElement(table.columns[i], index));
     }
     cout << endl;
 }
 
 void SQLInterpreter::printWithSpaces(const string &text) {
-    int spacesLeft = minRowWidth - text.size();
+    int spacesLeft = table.minRowWidth - text.size();
     cout << text;
 
     for(int i = 0; i < spacesLeft; i++) {
@@ -354,8 +319,8 @@ vector<string> SQLInterpreter::splitHashStr(string text) {
         if (text[i] == '#') {
             splitArray.push_back(colName);
 
-            if(colName.size() > minRowWidth) {
-                minRowWidth = colName.size();
+            if(colName.size() > table.minRowWidth) {
+                table.minRowWidth = colName.size();
             }
 
             colName = "";
@@ -372,9 +337,6 @@ void SQLInterpreter::createTableMap(string tableName) {
     schema.open("../Relations/schema");
     string line, tabStruct, constraintStr;
 
-    table<int>.clear();
-    table<string>.clear();
-    table<double>.clear();
 
     while (schema) {
         getline(schema, line);
@@ -391,8 +353,8 @@ void SQLInterpreter::createTableMap(string tableName) {
     vector<string> tableColType = splitHashStr(tabStruct);
 
     for (int i = 1; i < tableColType.size(); i += 2) {
-        columns.push_back(tableColType[i]);
-        colTypes[tableColType[i]] = tableColType[i + 1];
+        table.columns.push_back(tableColType[i]);
+        table.colTypes[tableColType[i]] = tableColType[i + 1];
     }
 
     ifstream tableRaw;
@@ -413,10 +375,10 @@ void SQLInterpreter::createTableMap(string tableName) {
         vector<string> rowSplit = splitHashStr(row);
 
         for (int i = 0; i < rowSplit.size(); i++) {
-            insertRow(columns[i], rowSplit[i], colTypes[columns[i]]);
+            insertRow(table.columns[i], rowSplit[i], table.colTypes[table.columns[i]]);
         }
 
-        totalRows++;
+        table.totalRows++;
     }
 
     tableRaw.close();
@@ -424,17 +386,7 @@ void SQLInterpreter::createTableMap(string tableName) {
 }
 
 void SQLInterpreter::insertRow(string colName, string val, string type) {
-    if (type == "INT") {
-        table<int>[colName].push_back(stoi(val));
-    }
-
-    if (type == "STR") {
-        table<string>[colName].push_back(val);
-    }
-
-    if (type == "DEC") {
-        table<double>[colName].push_back(stod(val));
-    }
+    table.addElement(colName, val);
 }
 
 // this function is only for specific conditional queries
@@ -447,8 +399,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
     TokenType opr = NULL_TOKEN; // stores the last operator (AND/OR)
     while (condIdx < conditions.size()) {
         string attrName = conditions[condIdx].lexeme;
-        if (colTypes[attrName].compare("INT") == 0) {
-            int val = table<int>[attrName][rowIdx];
+        if (table.colTypes[attrName].compare("INT") == 0) {
+            int val = stoi(table.getElement(attrName, rowIdx));
             condIdx++;
             if (conditions[condIdx].type == GREATER_EQUAL) {
                 condIdx++;
@@ -541,8 +493,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     if (opr == AND && res == 0) return false;
                 }
             }
-        } else if (colTypes[attrName].compare("STR") == 0) {
-            string val = table<string>[attrName][rowIdx];
+        } else if (table.colTypes[attrName].compare("STR") == 0) {
+            string val = table.getElement(attrName, rowIdx);
             condIdx++;
             if (conditions[condIdx].type == GREATER_EQUAL) {
                 condIdx++;
@@ -637,8 +589,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                 }
             }
         }
-        else if (colTypes[attrName].compare("DEC") == 0) {
-            int val = table<double>[attrName][rowIdx];
+        else if (table.colTypes[attrName].compare("DEC") == 0) {
+            double val = stod(table.getElement(attrName, rowIdx));
             condIdx++;
             if (conditions[condIdx].type == GREATER_EQUAL) {
                 condIdx++;
@@ -747,7 +699,7 @@ void SQLInterpreter::createConstraints(string constraintStr) {
 
     for(auto token: constrTokens){
         if(token.type==HASH){
-            constraints.push_back(attrConstr);
+            table.constraints.push_back(attrConstr);
             attrConstr = vector<Token>();
             continue;
         }
@@ -756,8 +708,8 @@ void SQLInterpreter::createConstraints(string constraintStr) {
 }
 
 bool SQLInterpreter::doesSatisfyConstraints(int rowIdx) {
-    for(int i=0;i<constraints.size();i++){
-        if(!doesRowSatisfy(rowIdx, constraints[i])) return false;
+    for(int i=0;i<table.constraints.size();i++){
+        if(!doesRowSatisfy(rowIdx, table.constraints[i])) return false;
     }
     return true;
 }

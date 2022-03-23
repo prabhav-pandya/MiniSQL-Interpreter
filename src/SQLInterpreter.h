@@ -6,15 +6,12 @@
 #include "Stmt.cpp"
 #include "Parser.h"
 #include <fstream>
+#include "Table.h"
 
 using namespace std;
 
 class SQLInterpreter {
-    map<string, string> colTypes;
-    vector<string> columns;
-    vector<vector<Token>> constraints;
-    int totalRows;
-    int minRowWidth;
+    Table table;
 
 public:
     SQLInterpreter();

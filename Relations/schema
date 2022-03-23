@@ -1,2 +1,6 @@
 students#id#INT#name#STR#dept#STR
 id>=10#name!="CS"#dept!="OP"
+DEPT#deptno#INT#dname#STR#loc#STR
+deptno!=0##
+EMP#empno#INT#ename#STR#job#STR#mgr#INT#hiredate#STR#sal#INT#deptno#INT
+######
