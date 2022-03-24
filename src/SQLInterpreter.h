@@ -37,6 +37,7 @@ public:
     string toLower(string str);
 
     string createSchema(const CreateTable& table);
+    string createDomainConstraints(CreateTable &table);
     vector<string> splitHashStr(string text);
     void interpretHelp(Help help);
 };

@@ -15,11 +15,13 @@ public:
     string tableName;
     vector<string> columnNames;
     vector<string> columnTypes;
+    vector<string> domainConstraints;
 
-    CreateTable(string tableName, vector<string> columnNames, vector<string> columnTypes) {
+    CreateTable(string tableName, vector<string> columnNames, vector<string> columnTypes, vector<string> domainConstraints) {
         this->tableName = tableName;
         this->columnNames = columnNames;
         this->columnTypes = columnTypes;
+        this->domainConstraints = domainConstraints;
     }
 };
 

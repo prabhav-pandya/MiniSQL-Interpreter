@@ -15,6 +15,7 @@ CreateTable Parser::parseCreateTable() {
     string tableName;
     vector<string> columnNames;
     vector<string> columnTypes;
+    vector<string> domainConstraints;
 
     consume(CREATE, "Expected Token Create!");
     consume(TABLE, "Expected Token Table!");
@@ -36,6 +37,20 @@ CreateTable Parser::parseCreateTable() {
                 advance();
             }
 
+            // domain constraints
+            if(peek().type == CHECK){
+                consume(CHECK, "");
+                string constraint = "";
+                while(peek().type!=COMMA && peek().type!=RIGHT_PAREN){
+                    if(peek().type==AND || peek().type==OR){
+                        constraint += peek().type==AND?" AND ":" OR ";
+                    }
+                    else constraint += peek().lexeme;
+                    advance();
+                }
+                domainConstraints.push_back(constraint);
+            }
+
             if (peek().type != RIGHT_PAREN) consume(COMMA, "Expected a Comma!");
         } else {
             cerr << "Invalid Column Name!";
@@ -46,7 +61,7 @@ CreateTable Parser::parseCreateTable() {
     consume(RIGHT_PAREN, "Expected a ')'!");
 //    consume(SEMICOLON, "Expected a ';'!");
 
-    return CreateTable(tableName, columnNames, columnTypes);
+    return CreateTable(tableName, columnNames, columnTypes, domainConstraints);
 }
 
 DropTable Parser::parseDropTable() {

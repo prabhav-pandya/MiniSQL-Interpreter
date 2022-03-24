@@ -82,6 +82,7 @@ void SQLInterpreter::interpretCreateTable(CreateTable table) {
 
     fstream tableSchema("../Relations/schema", ios_base::app);
     tableSchema << endl << createSchema(table);
+    tableSchema << endl << createDomainConstraints(table);
     tableSchema.close();
 
     fstream tableFile;
@@ -110,6 +111,13 @@ string SQLInterpreter::createSchema(const CreateTable &table) {
     }
 
     return schema;
+}
+
+string SQLInterpreter::createDomainConstraints(CreateTable &table){
+    string hashConstraint = "";
+    for(auto constr: table.domainConstraints) hashConstraint += constr + "#";
+    hashConstraint = hashConstraint.substr(0, hashConstraint.size()-1);
+    return  hashConstraint;
 }
 
 void SQLInterpreter::interpretDropTable(DropTable stmt) {
