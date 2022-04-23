@@ -184,7 +184,6 @@ void SQLInterpreter::interpretDelete(Delete stmt){
 
 void SQLInterpreter::interpretUpdate(Update stmt){
     createTableMap(stmt.tableName);
-    clearTable(stmt.tableName);
 
     ofstream tableRaw("../Relations/"+stmt.tableName, ios::app);
 
@@ -196,8 +195,16 @@ void SQLInterpreter::interpretUpdate(Update stmt){
             for(auto itr: stmt.attrValues){
                 table.updateTable(itr.first, i, itr.second);
             }
+            if(!doesSatisfyConstraints(i)){
+                cerr<<"Domain constraints not satisfied\n";
+                return;
+            }
         }
+    }
 
+    clearTable(stmt.tableName);
+
+    for(int i=0;i<table.totalRows;i++){
         string row="";
 
         for (auto column: table.columns){
@@ -208,6 +215,7 @@ void SQLInterpreter::interpretUpdate(Update stmt){
 
         tableRaw<<row<<endl;
     }
+
 
     cout<<rowsAffected<<" rows affected"<<endl;
     tableRaw.close();
