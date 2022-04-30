@@ -36,12 +36,12 @@ public:
 
 class Select : public Stmt {
 public:
-    string tableName;
+    vector<string> tableNames;
     vector<string> columnNames;
     vector<Token> condition;
 
-    Select(string tableName, vector<string> columnNames, vector<Token> condition) {
-        this->tableName = tableName;
+    Select(vector<string> tableNames, vector<string> columnNames, vector<Token> condition) {
+        this->tableNames = tableNames;
         this->columnNames = columnNames;
         this->condition = condition;
     }

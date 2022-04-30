@@ -24,6 +24,8 @@ public:
     void interpretUpdate(Update stmt);
 
     void createTableMap(string tableName);
+    void createTableMap(vector<string> tableNames);
+
     void insertRow(string colName, string val, string type);
     void printRow(int index, vector<string> columns);
     void printWithSpaces(const string &text);
@@ -35,6 +37,7 @@ public:
 
     bool checkForSemicolon(string basicString);
     string toLower(string str);
+    bool isalphanum(string str);
 
     string createSchema(const CreateTable& table);
     string createDomainConstraints(CreateTable &table);

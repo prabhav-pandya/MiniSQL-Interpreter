@@ -222,7 +222,7 @@ void SQLInterpreter::interpretUpdate(Update stmt){
 }
 
 void SQLInterpreter::interpretSelect(Select stmt) {
-    createTableMap(stmt.tableName);
+    createTableMap(stmt.tableNames);
 
     vector<string> columnsToPrint;
 
@@ -401,6 +401,86 @@ void SQLInterpreter::createTableMap(string tableName) {
     schema.close();
 }
 
+// overloaded function for select queries
+void SQLInterpreter::createTableMap(vector<string> tableNames) {
+
+    int colPad = 0;
+
+    for(auto tableName: tableNames){
+        ifstream schema;
+        schema.open("../Relations/schema");
+        string line, tabStruct, constraintStr;
+
+
+        while (schema) {
+            getline(schema, line);
+            if (line[tableName.size()] != '#') continue;
+            if (line.substr(0, tableName.size()) == tableName) {
+                tabStruct = line;
+                getline(schema, constraintStr);
+                break;
+            }
+        }
+
+        vector<string> tableColType = splitHashStr(tabStruct);
+
+        // keep track of table and total columns before merging another table
+        Table oldTable = table;
+        colPad = table.columns.size();
+
+        for (int i = 1; i < tableColType.size(); i += 2) {
+            table.columns.push_back(tableColType[i]);
+            table.colTypes[tableColType[i]] = tableColType[i + 1];
+        }
+
+        ifstream tableRaw;
+
+        //cout<<tableName<<" "<<tableName.size();
+        tableRaw.open("../Relations/" + tableName);
+        string row;
+
+        if(!tableRaw.is_open()){
+            cerr<<"No such table exists"<<endl;
+            exit(1);
+        }
+
+        while (getline(tableRaw, row)) {
+
+           if(row.empty()) continue;
+
+            vector<string> rowSplit = splitHashStr(row);
+
+
+            if(table.getColSize(table.columns[colPad])==table.totalRows){
+                for(int i=0;i<oldTable.totalRows;i++){
+                    for(int j=0;j<oldTable.columns.size();j++){
+                        insertRow(table.columns[j], table.getElement(table.columns[j], i), table.colTypes[table.columns[j]]);
+                    }
+                    table.totalRows++;
+                }
+            }
+
+            if(oldTable.totalRows!=0){
+                for(int i=0;i<oldTable.totalRows;i++){
+                    for(int j=0;j<rowSplit.size();j++){
+                        insertRow(table.columns[colPad+j], rowSplit[j], table.colTypes[table.columns[colPad+j]]);
+                    }
+                }
+            }
+            else{
+                for(int i=0;i<rowSplit.size();i++){
+                    insertRow(table.columns[colPad+i], rowSplit[i], table.colTypes[table.columns[colPad+i]]);
+                }
+                table.totalRows++;
+            }
+        }
+
+        tableRaw.close();
+        schema.close();
+    }
+
+}
+
 void SQLInterpreter::insertRow(string colName, string val, string type) {
     table.addElement(colName, val);
 }
@@ -416,11 +496,20 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
     while (condIdx < conditions.size()) {
         string attrName = conditions[condIdx].lexeme;
         if (table.colTypes[attrName].compare("INT") == 0) {
+
             int val = stoi(table.getElement(attrName, rowIdx));
             condIdx++;
-            if (conditions[condIdx].type == GREATER_EQUAL) {
-                condIdx++;
-                if (val >= stoi(conditions[condIdx].lexeme)) {
+            TokenType compareOp = conditions[condIdx].type;
+            condIdx++;
+
+            int compareVal;
+            if(isalphanum(conditions[condIdx].lexeme)){
+                compareVal = stoi(table.getElement(conditions[condIdx].lexeme, rowIdx));
+            }
+            else compareVal = stoi(conditions[condIdx].lexeme);
+
+            if (compareOp == GREATER_EQUAL) {
+                if (val >= compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -433,9 +522,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == GREATER) {
-                condIdx++;
-                if (val > stoi(conditions[condIdx].lexeme)) {
+            } else if (compareOp == GREATER) {
+                if (val > compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -448,9 +536,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == EQUAL) {
-                condIdx++;
-                if (val == stoi(conditions[condIdx].lexeme)) {
+            } else if (compareOp == EQUAL) {
+                if (val == compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -463,9 +550,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } if (conditions[condIdx].type == BANG_EQUAL) {
-                condIdx++;
-                if (val != stoi(conditions[condIdx].lexeme)) {
+            } if (compareOp == BANG_EQUAL) {
+                if (val != compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -478,9 +564,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == LESS) {
-                condIdx++;
-                if (val < stoi(conditions[condIdx].lexeme)) {
+            } else if (compareOp == LESS) {
+                if (val < compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -493,9 +578,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == LESS_EQUAL) {
-                condIdx++;
-                if (val <= stoi(conditions[condIdx].lexeme)) {
+            } else if (compareOp == LESS_EQUAL) {
+                if (val <= compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -512,9 +596,17 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
         } else if (table.colTypes[attrName].compare("STR") == 0) {
             string val = table.getElement(attrName, rowIdx);
             condIdx++;
-            if (conditions[condIdx].type == GREATER_EQUAL) {
-                condIdx++;
-                if (val.compare(conditions[condIdx].literal) >= 0) {
+            TokenType compareOp = conditions[condIdx].type;
+            condIdx++;
+
+            string compareVal;
+            if(conditions[condIdx].type!=STRING){
+                compareVal = table.getElement(conditions[condIdx].literal, rowIdx);
+            }
+            else compareVal = conditions[condIdx].literal;
+
+            if (compareOp == GREATER_EQUAL) {
+                if (val.compare(compareVal) >= 0) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -527,9 +619,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == GREATER) {
-                condIdx++;
-                if (val.compare(conditions[condIdx].literal) > 0) {
+            } else if (compareOp == GREATER) {
+                if (val.compare(compareVal) > 0) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -542,9 +633,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == EQUAL) {
-                condIdx++;
-                if (val.compare(conditions[condIdx].literal) == 0) {
+            } else if (compareOp == EQUAL) {
+                if (val.compare(compareVal) == 0) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -557,9 +647,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } if (conditions[condIdx].type == BANG_EQUAL) {
-                condIdx++;
-                if (val.compare(conditions[condIdx].literal)!=0) {
+            } if (compareOp == BANG_EQUAL) {
+                if (val.compare(compareVal)!=0) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -572,9 +661,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == LESS) {
-                condIdx++;
-                if (val.compare(conditions[condIdx].literal) < 0) {
+            } else if (compareOp == LESS) {
+                if (val.compare(compareVal) < 0) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -588,9 +676,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     if (opr == AND && res == 0) return false;
                 }
             }
-            if (conditions[condIdx].type == LESS_EQUAL) {
-                condIdx++;
-                if (val.compare(conditions[condIdx].literal) > 0) {
+            if (compareOp == LESS_EQUAL) {
+                if (val.compare(compareVal) > 0) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -606,11 +693,20 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
             }
         }
         else if (table.colTypes[attrName].compare("DEC") == 0) {
+
             double val = stod(table.getElement(attrName, rowIdx));
             condIdx++;
-            if (conditions[condIdx].type == GREATER_EQUAL) {
-                condIdx++;
-                if (val >= stod(conditions[condIdx].lexeme)) {
+            TokenType compareOp = conditions[condIdx].type;
+            condIdx++;
+
+            double compareVal;
+            if(isalphanum(conditions[condIdx].lexeme)){
+                compareVal = stod(table.getElement(conditions[condIdx].lexeme, rowIdx));
+            }
+            else compareVal = stod(conditions[condIdx].lexeme);
+
+            if (compareOp == GREATER_EQUAL) {
+                if (val >= compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -623,9 +719,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == GREATER) {
-                condIdx++;
-                if (val > stod(conditions[condIdx].lexeme)) {
+            } else if (compareOp == GREATER) {
+                if (val > compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -638,9 +733,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == EQUAL) {
-                condIdx++;
-                if (val == stod(conditions[condIdx].lexeme)) {
+            } else if (compareOp == EQUAL) {
+                if (val == compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -653,9 +747,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } if (conditions[condIdx].type == BANG_EQUAL) {
-                condIdx++;
-                if (val != stod(conditions[condIdx].lexeme)) {
+            } if (compareOp == BANG_EQUAL) {
+                if (val != compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -668,9 +761,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == LESS) {
-                condIdx++;
-                if (val < stod(conditions[condIdx].lexeme)) {
+            } else if (compareOp == LESS) {
+                if (val < compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -683,9 +775,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
                     }
                     if (opr == AND && res == 0) return false;
                 }
-            } else if (conditions[condIdx].type == LESS_EQUAL) {
-                condIdx++;
-                if (val <= stod(conditions[condIdx].lexeme)) {
+            } else if (compareOp == LESS_EQUAL) {
+                if (val <= compareVal) {
                     if (res == -1) res = 1;
                     if (opr == AND) {
                         res *= 1;
@@ -742,6 +833,14 @@ string SQLInterpreter::toLower(string str){
         res += tolower(c);
     }
     return res;
+}
+
+
+bool SQLInterpreter::isalphanum(string str) {
+    for(auto c: str){
+        if(isalpha(c)) return true;
+    }
+    return false;
 }
 
 void SQLInterpreter::clearTable(string tableName){

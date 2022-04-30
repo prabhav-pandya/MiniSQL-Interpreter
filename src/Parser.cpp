@@ -126,7 +126,7 @@ Select Parser::parseSelect() {
     // consume and store column names or *
     bool toConsume = true;
     vector<string> columns;
-    string tableName;
+    vector<string> tableNames;
 
     if (peek().type == STAR) {
         columns.push_back("*");
@@ -147,15 +147,22 @@ Select Parser::parseSelect() {
     consume(FROM, "Syntax error");
 
     // consume table name
-    if (peek().type == IDENTIFIER) tableName = peek().lexeme;
+    if (peek().type == IDENTIFIER){
+        // tableName = peek().lexeme;
+        while(peek().type==IDENTIFIER){
+            tableNames.push_back(peek().lexeme);
+            Token next = advance();
+            if(next.type!=COMMA) break;
+            else consume(COMMA, "");
+        }
+    }
     else cerr << "Table name not specified";
-    advance();
 
     vector<Token> condition = parseConditions();
 
     consume(SEMICOLON, "Expected ;");
 
-    return Select(tableName, columns, condition);
+    return Select(tableNames, columns, condition);
 }
 
 Delete Parser::parseDelete(){

@@ -21,10 +21,12 @@ public:
     int minRowWidth;
 
     Table();
+    Table(const Table &t);
 
     void addElement(string column, string val);
     void updateTable(string column, int index, string newVal);
     string getElement(string column, int index);
+    int getColSize(string column);
 
 };
 
