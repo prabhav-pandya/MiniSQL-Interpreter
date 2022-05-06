@@ -34,6 +34,7 @@ public:
 
     bool doesSatisfyConstraints(int rowIdx);
     void createConstraints(string constraintStr);
+    bool checkPrimary(int rowIdx, string col);
 
     bool checkForSemicolon(string basicString);
     string toLower(string str);

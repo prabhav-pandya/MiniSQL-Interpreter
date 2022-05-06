@@ -494,6 +494,11 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
     int res = -1;
     TokenType opr = NULL_TOKEN; // stores the last operator (AND/OR)
     while (condIdx < conditions.size()) {
+
+        if(conditions[condIdx].type==PRIMARY){
+            return true;
+        }
+
         string attrName = conditions[condIdx].lexeme;
         if (table.colTypes[attrName].compare("INT") == 0) {
 
@@ -814,8 +819,22 @@ void SQLInterpreter::createConstraints(string constraintStr) {
     }
 }
 
+bool SQLInterpreter::checkPrimary(int rowIdx, string col){
+    string val = table.getElement(col, rowIdx);
+
+    for(int i=0;i<table.totalRows;i++){
+        if(i==rowIdx) continue;
+        string rowVal = table.getElement(col, i);
+        if(rowVal==val) return false;
+    }
+    return true;
+}
+
 bool SQLInterpreter::doesSatisfyConstraints(int rowIdx) {
     for(int i=0;i<table.constraints.size();i++){
+        // check if primary key & its satisfied
+        for(auto constr: table.constraints[i]) if(constr.type==PRIMARY) if(!checkPrimary(rowIdx, table.columns[i])) return false;
+        // check for other conditions
         if(!doesRowSatisfy(rowIdx, table.constraints[i])) return false;
     }
     return true;

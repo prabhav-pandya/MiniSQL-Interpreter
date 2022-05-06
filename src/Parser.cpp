@@ -50,7 +50,11 @@ CreateTable Parser::parseCreateTable() {
                 }
                 domainConstraints.push_back(constraint);
             }
-
+            else if(peek().type == PRIMARY){
+                consume(PRIMARY, "");
+                consume(KEY, "");
+                domainConstraints.push_back("PRIMARY");
+            }
             if (peek().type != RIGHT_PAREN) consume(COMMA, "Expected a Comma!");
         } else {
             cerr << "Invalid Column Name!";
