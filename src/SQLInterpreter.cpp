@@ -128,9 +128,19 @@ void SQLInterpreter::interpretDropTable(DropTable stmt) {
     schema.close();
 
     ofstream newSchema("../Relations/schema");
+
+    bool isNextDomConstr = false;
+
     for (string line: lines) {
+
+        if(isNextDomConstr){
+            isNextDomConstr=false;
+            continue;
+        }
+
         if (line.substr(0, stmt.tableName.size()) == stmt.tableName
             && line[stmt.tableName.size()] == '#') {
+            isNextDomConstr = true;
             continue;
         }
 
@@ -257,7 +267,7 @@ void SQLInterpreter::interpretInsert(Insert stmt) {
     }
     // insert values in table
     for(int i=0;i<table.columns.size();i++){
-        insertRow(table.columns[i], stmt.values[i], table.colTypes[table.columns[i]]);
+        insertRow(table.columns[i], stmt.values[i], table.colTypes[table.columns[i]], table);
     }
     table.totalRows++;
 
@@ -364,7 +374,7 @@ void SQLInterpreter::createTableMap(string tableName) {
         }
     }
     // store attribute constraints
-    createConstraints(constraintStr);
+    table.constraints = createConstraints(constraintStr);
 
     vector<string> tableColType = splitHashStr(tabStruct);
 
@@ -391,7 +401,7 @@ void SQLInterpreter::createTableMap(string tableName) {
         vector<string> rowSplit = splitHashStr(row);
 
         for (int i = 0; i < rowSplit.size(); i++) {
-            insertRow(table.columns[i], rowSplit[i], table.colTypes[table.columns[i]]);
+            insertRow(table.columns[i], rowSplit[i], table.colTypes[table.columns[i]], table);
         }
 
         table.totalRows++;
@@ -454,7 +464,7 @@ void SQLInterpreter::createTableMap(vector<string> tableNames) {
             if(table.getColSize(table.columns[colPad])==table.totalRows){
                 for(int i=0;i<oldTable.totalRows;i++){
                     for(int j=0;j<oldTable.columns.size();j++){
-                        insertRow(table.columns[j], table.getElement(table.columns[j], i), table.colTypes[table.columns[j]]);
+                        insertRow(table.columns[j], table.getElement(table.columns[j], i), table.colTypes[table.columns[j]], table);
                     }
                     table.totalRows++;
                 }
@@ -463,13 +473,13 @@ void SQLInterpreter::createTableMap(vector<string> tableNames) {
             if(oldTable.totalRows!=0){
                 for(int i=0;i<oldTable.totalRows;i++){
                     for(int j=0;j<rowSplit.size();j++){
-                        insertRow(table.columns[colPad+j], rowSplit[j], table.colTypes[table.columns[colPad+j]]);
+                        insertRow(table.columns[colPad+j], rowSplit[j], table.colTypes[table.columns[colPad+j]], table);
                     }
                 }
             }
             else{
                 for(int i=0;i<rowSplit.size();i++){
-                    insertRow(table.columns[colPad+i], rowSplit[i], table.colTypes[table.columns[colPad+i]]);
+                    insertRow(table.columns[colPad+i], rowSplit[i], table.colTypes[table.columns[colPad+i]], table);
                 }
                 table.totalRows++;
             }
@@ -481,7 +491,66 @@ void SQLInterpreter::createTableMap(vector<string> tableNames) {
 
 }
 
-void SQLInterpreter::insertRow(string colName, string val, string type) {
+// Get a Table class object for specified table
+Table SQLInterpreter::getTableMap(string tableName) {
+
+    Table table;
+
+    ifstream schema;
+    schema.open("../Relations/schema");
+    string line, tabStruct, constraintStr;
+
+
+    while (schema) {
+        getline(schema, line);
+        if (line[tableName.size()] != '#') continue;
+        if (line.substr(0, tableName.size()) == tableName) {
+            tabStruct = line;
+            getline(schema, constraintStr);
+            break;
+        }
+    }
+    // store attribute constraints
+    table.constraints = createConstraints(constraintStr);
+
+    vector<string> tableColType = splitHashStr(tabStruct);
+
+    for (int i = 1; i < tableColType.size(); i += 2) {
+        table.columns.push_back(tableColType[i]);
+        table.colTypes[tableColType[i]] = tableColType[i + 1];
+    }
+
+    ifstream tableRaw;
+
+    //cout<<tableName<<" "<<tableName.size();
+    tableRaw.open("../Relations/" + tableName);
+    string row;
+
+    if(!tableRaw.is_open()){
+        cerr<<"No such table exists"<<endl;
+        exit(1);
+    }
+
+    while (getline(tableRaw, row)) {
+
+//        if(row.empty()) continue;
+
+        vector<string> rowSplit = splitHashStr(row);
+
+        for (int i = 0; i < rowSplit.size(); i++) {
+            insertRow(table.columns[i], rowSplit[i], table.colTypes[table.columns[i]], table);
+        }
+
+        table.totalRows++;
+    }
+
+    tableRaw.close();
+    schema.close();
+
+    return table;
+}
+
+void SQLInterpreter::insertRow(string colName, string val, string type, Table &table) {
     table.addElement(colName, val);
 }
 
@@ -496,7 +565,8 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
     while (condIdx < conditions.size()) {
 
         if(conditions[condIdx].type==PRIMARY){
-            return true;
+            condIdx++;
+            continue;
         }
 
         string attrName = conditions[condIdx].lexeme;
@@ -804,19 +874,23 @@ bool SQLInterpreter::doesRowSatisfy(int rowIdx, vector<Token> conditions) {
     else return false;
 }
 
-void SQLInterpreter::createConstraints(string constraintStr) {
+vector<vector<Token>> SQLInterpreter::createConstraints(string constraintStr) {
     Scanner scanner(constraintStr);
     vector<Token> constrTokens = scanner.scanTokens();
     vector<Token> attrConstr;
 
+    vector<vector<Token>> constraints;
+
     for(auto token: constrTokens){
         if(token.type==HASH){
-            table.constraints.push_back(attrConstr);
+            constraints.push_back(attrConstr);
             attrConstr = vector<Token>();
             continue;
         }
         attrConstr.push_back(token);
     }
+    constraints.push_back(attrConstr);
+    return constraints;
 }
 
 bool SQLInterpreter::checkPrimary(int rowIdx, string col){
@@ -830,10 +904,29 @@ bool SQLInterpreter::checkPrimary(int rowIdx, string col){
     return true;
 }
 
+bool SQLInterpreter::checkForeignKeyExists(int rowIdx, string col, string tableName, string attribute){
+    Table foreignTable = getTableMap(tableName);
+    string keyVal = table.getElement(col, rowIdx);
+    for(int i=0;i<foreignTable.totalRows;i++){
+        if(keyVal==foreignTable.getElement(attribute, i)) return true;
+    }
+    return false;
+}
+
 bool SQLInterpreter::doesSatisfyConstraints(int rowIdx) {
     for(int i=0;i<table.constraints.size();i++){
+        // check if foreign key & its satisfied
+        if(table.constraints[i].size()>0 && table.constraints[i][0].type==FOREIGN){
+            string tableName = table.constraints[i][1].lexeme;
+            string attributeName = table.constraints[i][2].lexeme;
+            if(!checkForeignKeyExists(rowIdx, table.columns[i], tableName, attributeName)) return false;
+            else return true;
+        }
         // check if primary key & its satisfied
-        for(auto constr: table.constraints[i]) if(constr.type==PRIMARY) if(!checkPrimary(rowIdx, table.columns[i])) return false;
+        for(auto constr: table.constraints[i]) if(constr.type==PRIMARY){
+                if(!checkPrimary(rowIdx, table.columns[i])) return false;
+                else return true;
+        }
         // check for other conditions
         if(!doesRowSatisfy(rowIdx, table.constraints[i])) return false;
     }

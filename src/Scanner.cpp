@@ -37,6 +37,7 @@ Scanner::Scanner(string query) {
     keywords["key"] = KEY;
     keywords["null"] = NULL_TOKEN;
     keywords["unique"] = UNIQUE;
+    keywords["references"] = REFERENCES;
 
     // data types
     keywords["int"] = TYPE;

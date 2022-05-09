@@ -3,13 +3,6 @@
 
 using namespace std;
 
-/*
- * Add support for multiple tables in SELECT command
- * Add syntax error for invalid WHERE commands
- *
- * */
-
-
 int main() {
     string query;
     for (;;) {

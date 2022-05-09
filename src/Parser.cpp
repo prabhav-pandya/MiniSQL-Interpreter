@@ -39,6 +39,7 @@ CreateTable Parser::parseCreateTable() {
 
             // domain constraints
             if(peek().type == CHECK){
+                // attribute_name data_type (check *conditions*)?
                 consume(CHECK, "");
                 string constraint = "";
                 while(peek().type!=COMMA && peek().type!=RIGHT_PAREN){
@@ -51,11 +52,35 @@ CreateTable Parser::parseCreateTable() {
                 domainConstraints.push_back(constraint);
             }
             else if(peek().type == PRIMARY){
-                consume(PRIMARY, "");
-                consume(KEY, "");
+                // attribute_name data_type (primary key)?
+                consume(PRIMARY, "Syntax Error");
+                consume(KEY, "Syntax Error");
                 domainConstraints.push_back("PRIMARY");
             }
+            else if(peek().type == FOREIGN){
+                // attribute_name data_type (FOREIGN KEY REFERENCES table_name attribute_name)?
+                consume(FOREIGN, "Syntax Error");
+                consume(KEY, "Syntax Error");
+                consume(REFERENCES, "Syntax Error");
+                string tableName, attributeName;
+                if(peek().type==IDENTIFIER){
+                    tableName = peek().lexeme;
+                    advance();
+                }
+                else consume(IDENTIFIER, "Syntax Error");
+
+                if(peek().type==IDENTIFIER){
+                    attributeName = peek().lexeme;
+                    advance();
+                }
+                else consume(IDENTIFIER, "Syntax Error");
+
+                domainConstraints.push_back("FOREIGN "+ tableName + " " + attributeName);
+            }
+            else domainConstraints.push_back("");
+
             if (peek().type != RIGHT_PAREN) consume(COMMA, "Expected a Comma!");
+
         } else {
             cerr << "Invalid Column Name!";
         }

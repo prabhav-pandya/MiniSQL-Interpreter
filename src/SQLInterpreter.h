@@ -25,16 +25,18 @@ public:
 
     void createTableMap(string tableName);
     void createTableMap(vector<string> tableNames);
+    Table getTableMap(string tableName);
 
-    void insertRow(string colName, string val, string type);
+    void insertRow(string colName, string val, string type, Table &table);
     void printRow(int index, vector<string> columns);
     void printWithSpaces(const string &text);
     bool doesRowSatisfy(int rowIdx, vector<Token> conditions);
     void clearTable(string tableName);
 
     bool doesSatisfyConstraints(int rowIdx);
-    void createConstraints(string constraintStr);
+    vector<vector<Token>> createConstraints(string constraintStr);
     bool checkPrimary(int rowIdx, string col);
+    bool checkForeignKeyExists(int rowIdx, string col, string tableName, string attribute);
 
     bool checkForSemicolon(string basicString);
     string toLower(string str);
