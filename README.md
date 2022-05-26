@@ -19,6 +19,7 @@ Commands like: Select, Insert & Delete have support for an optional 'WHERE' comm
 Queries are *NOT* case sensitive except with indentifiers and aren't affected by redundant white spaces.
 <br><br>
 FOREIGN & PRIMARY KEYS are also supported.<br>
+
 ```
 Example query := CREATE TABLE table_name (id INT PRIMARY KEY, name STR, dept INT FOREIGN KEY REFERENCES table_name table_column).
 ```
