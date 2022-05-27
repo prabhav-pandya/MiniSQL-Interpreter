@@ -126,8 +126,10 @@ Insert Parser::parseInsert() {
 
     // consume values
     vector<string> values;
+    vector<TokenType> types;
     while (peek().type != RIGHT_PAREN) {
         if (peek().type == IDENTIFIER || peek().type == STRING) {
+            types.push_back(peek().type);
             values.push_back(peek().type == IDENTIFIER ? peek().lexeme : peek().literal);
             advance();
         } else {
@@ -144,7 +146,7 @@ Insert Parser::parseInsert() {
 
     consume(SEMICOLON, "Expected ;");
 
-    return Insert(tableName, values);
+    return Insert(tableName, values, types);
 
 }
 

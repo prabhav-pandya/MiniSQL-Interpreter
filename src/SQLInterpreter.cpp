@@ -267,6 +267,20 @@ void SQLInterpreter::interpretInsert(Insert stmt) {
     }
     // insert values in table
     for(int i=0;i<table.columns.size();i++){
+
+        // Check if datatype matches with value in the query
+        if(table.colTypes[table.columns[i]]=="STR"){
+            if(stmt.types[i]!=STRING){
+                cerr<<"Value type doesn't match!"<<endl;
+                return;
+            }
+        }
+        if(table.colTypes[table.columns[i]]=="INT"){
+            if(stmt.types[i]==STRING){
+                cerr<<"Value type doesn't match!"<<endl;
+                return;
+            }
+        }
         insertRow(table.columns[i], stmt.values[i], table.colTypes[table.columns[i]], table);
     }
     table.totalRows++;
@@ -298,17 +312,33 @@ void SQLInterpreter::interpretHelp(Help stmt) {
 
     switch (stmt.option) {
         case 1: {
+            bool alt= true;
             for(string line : lines) {
-                cout << line << endl;
+                if(alt){
+                    vector<string> splitTableInfo = splitHashStr(line);
+                    cout<<splitTableInfo[0]<<": ";
+                    for(int i=1;i<splitTableInfo.size()-1;i+=2){
+                        cout<<splitTableInfo[i]<<" "<<splitTableInfo[i+1]<<", ";
+                    }
+                    cout<<endl;
+                    alt = false;
+                }
+                else alt = true;
             }
             break;
         }
 
         case 2: {
-            for(string line : lines) {
-                if (line[stmt.tableName.size()] != '#') continue;
-                if (line.substr(0, stmt.tableName.size()) == stmt.tableName) {
-                    cout << line << endl;
+            for(int i=0;i<lines.size()-1;i+=2) {
+                string tableInfo = lines[i];
+                if (tableInfo[stmt.tableName.size()] != '#') continue;
+                if (tableInfo.substr(0, stmt.tableName.size()) == stmt.tableName) {
+                    vector<string> tableInfoSplit = splitHashStr(tableInfo);
+                    cout<<tableInfoSplit[0]<<": ";
+                    for(int i=1;i<tableInfoSplit.size()-1;i+=2){
+                        cout<<tableInfoSplit[i]<<" "<<tableInfoSplit[i+1]<<", ";
+                    }
+                    cout<<endl;
                     break;
                 }
             }

@@ -65,10 +65,12 @@ class Insert : public Stmt {
 public:
     string tableName;
     vector<string> values;
+    vector<TokenType> types;
 
-    Insert(string tableName, vector<string> vals) {
+    Insert(string tableName, vector<string> vals, vector<TokenType> types) {
         this->tableName = tableName;
         this->values = vals;
+        this->types = types;
     }
 };
 
